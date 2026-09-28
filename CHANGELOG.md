@@ -39,7 +39,7 @@ and the cordis loader id, not a document version, so it does not move.
   file parses, every `.js`/`.mjs` passes `node --check`, no credential or
   machine-specific path is committed, the package identity is consistent across
   `package.json`, `package-lock.json`, `cordis.patch.yml` and `screenshots.json`,
-  and then the 157 offline checks in `scripts/verify.mjs`.
+  and then the 156 offline checks in `scripts/verify.mjs`.
 - **`SECURITY.md`** — supported versions, private reporting, the exact list of what
   the plugin reads, writes and sends, and the credential-resolution order.
 - **`package-lock.json`** — the React dependency tree, so CI installs what the
@@ -47,6 +47,17 @@ and the cordis loader id, not a document version, so it does not move.
 
 ### Changed
 
+- **Three states became two.** The card used to open in two steps — the rolling
+  windows first, the money and totals second — which left a middle state that
+  answered no question the resting line or the full card did not. One click now
+  unfolds everything in the shape the card was designed around: a header with the
+  brand mark, the plan and the billing link; the three windows as a fixed grid of
+  label, meter, percentage and countdown; the monthly allowance as one money line
+  (`$61.80 / $70.22 used`, `$8.42 left`); and the request and token totals as a
+  caption. The grid's percentage and countdown columns size to their widest cell,
+  so `5%` and `100%` stay right-aligned against each other without a fixed width
+  that would clip a longer value. `preview/build.mjs` now clicks once, since a
+  second click folds the card straight back.
 - **The resting card is one line.** It used to keep the boxed header and one
   window row; it is now a strip — brand mark, plan, meter, percentage, reset
   countdown (`↻ 3d20h`) — the height of a single line, which is all the sidebar
@@ -90,11 +101,12 @@ and the cordis loader id, not a document version, so it does not move.
   the README samples stay byte-stable, and both READMEs' sample blocks are now
   generated from real CLI output. Code comments are untouched (still the mix of
   English and Chinese they were).
-- **One type size across the whole card.** The title, the window labels, the
-  percentage and the notes are all 13 px now; weight still marks the headline. A
-  14 px headline over 12 px notes made a card this small read as two stacked
-  documents. The stylesheet sets exactly one `font-size` value (plus the rail
-  badge, which is a separate 36 px surface), and the client suite asserts it.
+- **A small type scale instead of one size.** The first pass set every line at
+  13 px. The two-state card that followed needs four, because at the sidebar's
+  196 px of content the brand mark, the plan badge and "View plans and credits"
+  only share a line with the link at 11 px. The scale is 16 / 13 / 12 / 11 — the
+  mark, the percentage the resting line leads with, the limit rows and the money,
+  then captions — and the client suite pins the set.
 - **A stale reading no longer prints its age underneath.** The card still dims
   when the host answers with its last snapshot or a refresh fails, and the age
   moved to the card's tooltip, where it costs no height: the sidebar has no room
@@ -111,7 +123,7 @@ and the cordis loader id, not a document version, so it does not move.
   below-threshold balance) stay on screen at every stage. A plan that reports no
   monthly window — or whose monthly percentage the host withheld because the read
   straddled a billing boundary — rests on the tightest trustworthy row instead of
-  a bare dash, matching what the collapsed rail badge already does. The behavior is covered by nine new checks in the
+  a bare dash, matching what the collapsed rail badge already does. The behavior is covered by ten new checks in the
   client suite, which now drives the card through stages 0, 1 and 2.
 - **Merged everything the shared repository changed after the move.** The data
   layer grew 706 → 711 lines, the dynamic and client suites were extended, both

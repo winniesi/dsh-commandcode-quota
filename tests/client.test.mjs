@@ -40,7 +40,7 @@ const checkAsync = async (label, fn) => {
 const percentagesIn = (html) => [...html.matchAll(/class="ccq-pct"[^>]*>([^<]*)</g)].map((match) => match[1])
 
 /** The window labels, in document order. */
-const labelsIn = (html) => [...html.matchAll(/class="ccq-winlabel">([^<]*)</g)].map((match) => match[1])
+const labelsIn = (html) => [...html.matchAll(/class="ccq-label">([^<]*)</g)].map((match) => match[1])
 
 const DAY = 86_400_000
 const HOUR = 3_600_000
@@ -230,13 +230,13 @@ console.log('bundle contract')
     assert.deepEqual(seen.rpcCall.slice(0, 3), ['/api', 'cc-quota/report', {}])
     assert.equal(seen.rpcCall[3], 'signal')
   })
-  check('the whole card uses one type size', () => {
-    // Title, window labels, percentage, notes: one size. A 14px headline over
-    // 12px notes made a small card read as two stacked documents.
+  check('the type scale is the small set the layout is built on', () => {
+    // 16px mark, 13px strip percentage, 12px limit rows and money, 11px captions.
+    // Not decoration: at 196px of content the mark + plan + "View plans and
+    // credits" only share a line because the link is set at 11px.
     const sizes = [...styles[0].textContent.matchAll(/font-size:\s*([^;}]+)/g)].map((match) => match[1].trim())
     assert.ok(sizes.length > 0, 'the stylesheet sets a size at all')
-    assert.deepEqual([...new Set(sizes)], ['13px'], `type sizes were ${[...new Set(sizes)].join(', ')}`)
-    assert.match(styles[0].textContent, /\.ccq-card\{[^}]*font-size:13px/)
+    assert.deepEqual([...new Set(sizes)].sort(), ['11px', '12px', '13px', '16px'], `type sizes were ${[...new Set(sizes)].join(', ')}`)
   })
   check('injects its stylesheet exactly once, using harness design tokens', () => {
     assert.equal(styles.length, 1)
@@ -271,9 +271,9 @@ console.log('window order and percentage-first values')
   check('each row carries its own reset chip', () => {
     const chips = [...html.matchAll(/class="ccq-reset">([^<]*)</g)].map((match) => match[1])
     assert.equal(chips.length, 3)
-    assert.match(chips[0], /^resets in \d+h\d+m$/, `5-hour chip was ${chips[0]}`)
-    assert.match(chips[1], /^resets in \d+d\d+h$/, `weekly chip was ${chips[1]}`)
-    assert.match(chips[2], /^resets in \d+d\d+h$/, `monthly chip was ${chips[2]}`)
+    assert.match(chips[0], /^↻ \d+h\d+m$/, `5-hour chip was ${chips[0]}`)
+    assert.match(chips[1], /^↻ \d+d\d+h$/, `weekly chip was ${chips[1]}`)
+    assert.match(chips[2], /^↻ \d+d\d+h$/, `monthly chip was ${chips[2]}`)
   })
   check('the warning band applies between 60% and 85%', () => {
     const warn = renderReady({ ...GOAT, fiveHour: { ...GOAT.fiveHour, used: 10, cap: 14, percent: 71.4 } }, 1)
@@ -309,20 +309,20 @@ console.log('progressive disclosure')
     assert.match(html, /class="ccq-strip"/)
     assert.match(html, /class="ccq-mark"[^>]*>⌘</, 'the brand mark stands in for the title')
     assert.match(html, /class="ccq-plan"[^>]*>GOAT</)
-    assert.match(html, /class="ccq-track"/, 'the meter is inline, not under a label row')
+    assert.match(html, /class="ccq-bar"/, 'the meter is inline, not under a label row')
     assert.deepEqual(percentagesIn(html), ['98%'])
-    assert.match(html, /class="ccq-strip-reset"[^>]*>↻ \d+d\d+h</)
+    assert.match(html, /class="ccq-reset"[^>]*>↻ \d+d\d+h</)
     // Not a shrunken card: the boxed header and the window rows are absent, so
     // the whole resting state is the height of one line.
     assert.doesNotMatch(html, /ccq-head/)
-    assert.doesNotMatch(html, /ccq-win"/)
+    assert.doesNotMatch(html, /ccq-row"/)
     assert.doesNotMatch(html, /ccq-chevron/)
     assert.doesNotMatch(html, /ccq-detail/)
   })
   check('the strip says which window it speaks for on the meter tooltip', () => {
     const html = renderReady(GOAT)
-    assert.match(html, /class="ccq-track" title="Monthly used 98\.1%"/)
-    assert.match(html, /class="ccq-strip-reset" title="Monthly · resets in /)
+    assert.match(html, /class="ccq-bar" title="Monthly used 98\.1%"/)
+    assert.match(html, /class="ccq-reset" title="Monthly · resets in /)
   })
   check('the resting card still names every window on its tooltip', () => {
     // Folded, not hidden: the strip prints no window label, so the card's own
@@ -330,20 +330,18 @@ console.log('progressive disclosure')
     const html = renderReady(GOAT)
     assert.match(html, /title="5-hour 15\.6% \(left \$11\.82\) · Weekly 6\.6% \(left \$32\.69\) · Monthly 98\.1% \(left \$1\.32\)/)
   })
-  check('the first click unfolds the rolling windows, and nothing more', () => {
+  check('one click unfolds everything: three windows, the money, the totals', () => {
     const html = renderReady(GOAT, 1)
     assert.deepEqual(labelsIn(html), ['5-hour', 'Weekly', 'Monthly'])
-    assert.doesNotMatch(html, /ccq-detail/)
-  })
-  check('the second click adds the money-and-totals panel', () => {
-    const html = renderReady(GOAT, 2)
-    assert.deepEqual(labelsIn(html), ['5-hour', 'Weekly', 'Monthly'])
-    assert.match(html, /ccq-detail/)
+    assert.match(html, /class="ccq-limits"/)
+    assert.match(html, /class="ccq-cost"/)
     assert.match(html, /17,859 requests · 100%/)
   })
-  check('the chevron and aria-expanded follow the unfolded state', () => {
-    assert.doesNotMatch(renderReady(GOAT), /ccq-chevron ccq-open/)
-    assert.match(renderReady(GOAT, 1), /ccq-chevron ccq-open/)
+  check('there are two states, and no chevron hinting at a third', () => {
+    // The whole card is the toggle in both states, so nothing draws a caret.
+    assert.doesNotMatch(renderReady(GOAT), /ccq-chevron/)
+    assert.doesNotMatch(renderReady(GOAT, 1), /ccq-chevron/)
+    assert.match(renderReady(GOAT), /aria-expanded="false"/)
     assert.match(renderReady(GOAT, 1), /aria-expanded="true"/)
   })
   check('a plan that reports no monthly window rests on its tightest row', () => {
@@ -356,7 +354,7 @@ console.log('progressive disclosure')
       weekly: { ...GOAT.weekly, percent: 42 },
     })
     assert.deepEqual(percentagesIn(html), ['42%'])
-    assert.match(html, /class="ccq-track" title="Weekly used 42\.0%"/)
+    assert.match(html, /class="ccq-bar" title="Weekly used 42\.0%"/)
   })
   check('a withheld monthly reading hands the resting row to the tightest window', () => {
     // Same rule as the rail badge: when the host refuses to stand behind the
@@ -367,7 +365,7 @@ console.log('progressive disclosure')
       monthly: { used: 69.5, remaining: 69.6, cap: 139.1, percent: undefined, capSuspect: true },
     })
     assert.deepEqual(percentagesIn(html), ['16%'])
-    assert.match(html, /class="ccq-track" title="5-hour used 15\.6%"/)
+    assert.match(html, /class="ccq-bar" title="5-hour used 15\.6%"/)
   })
   check('a warning stays on screen while the card rests', () => {
     // Unfolding is for figures, not for alerts: a canceled subscription or a
@@ -393,31 +391,30 @@ console.log('plan-agnostic rendering')
     assert.match(html, /this plan reports no credit windows/)
   })
   check('the detail body carries the monthly allowance and the period totals', () => {
-    const html = renderReady(GOAT, 2)
-    const detail = html.slice(html.indexOf('ccq-detail'))
-    assert.match(detail, /Monthly used<\/span><span[^>]*>\$68\.89 \/ \$70\.21</)
-    assert.match(detail, /Remaining<\/span><span[^>]*>\$1\.32</)
-    assert.match(detail, /17,859 requests · 100%/)
-    assert.match(detail, /in 3\.34B \/ out 16\.32M/)
+    const html = renderReady(GOAT, 1)
+    const detail = html.slice(html.indexOf('<div class="ccq-cost"'))
+    assert.match(detail, /\$68\.89 \/ \$70\.21<span>used<\/span>/)
+    assert.match(detail, /class="ccq-cost-left"[^>]*>\$1\.32 left</)
+    assert.match(detail, /17,859 requests · 100% · in 3\.34B \/ out 16\.32M/)
   })
   check('remaining credit carries the monthly urgency colour', () => {
-    const html = renderReady(GOAT, 2)
-    const detail = html.slice(html.indexOf('ccq-detail'))
-    assert.match(detail, /Remaining<\/span><span class="ccq-kv-value" style="color:var\(--dsw-alias-state-error-primary\)">\$1\.32/)
+    const html = renderReady(GOAT, 1)
+    const detail = html.slice(html.indexOf('<div class="ccq-cost"'))
+    assert.match(detail, /class="ccq-cost-left" style="color:var\(--dsw-alias-state-error-primary\)">\$1\.32 left</)
   })
   check('the detail body leaves the rolling windows out of the money report', () => {
     // 5-hour and weekly are pass/fail limits: a user budgets against the
     // monthly allowance, and their dollar rows were pure noise in the sidebar.
-    const html = renderReady(GOAT, 2)
-    const detail = html.slice(html.indexOf('ccq-detail'))
+    const html = renderReady(GOAT, 1)
+    const detail = html.slice(html.indexOf('<div class="ccq-cost"'))
     assert.doesNotMatch(detail, /\$2\.18 \/ \$14\.00/)
     assert.doesNotMatch(detail, /\$2\.31 \/ \$35\.00/)
-    assert.equal([...detail.matchAll(/class="ccq-kv"/g)].length, 2, 'used and remaining, nothing else')
+    assert.equal([...detail.matchAll(/class="ccq-cost"/g)].length, 1, 'one money line, nothing else')
   })
   check('no pace, burn-rate or projection language survives anywhere', () => {
     // Deliberate removal: how fast someone burns credit is not the card's
     // business, and "over pace" cannot be acted on by anyone who has work to do.
-    const html = renderReady(GOAT, 2)
+    const html = renderReady(GOAT, 1)
     for (const banned of ['over pace', 'burn rate', 'per day', 'projected', 'exhaust', 'days left']) {
       assert.equal(html.includes(banned), false, `card still mentions ${banned}`)
     }
@@ -458,15 +455,15 @@ console.log('values that move')
     // suite would flake once in a while.
     const soon = renderReady({ ...GOAT, fiveHour: { ...GOAT.fiveHour, resetAt: Date.now() + 59.5 * 60_000 } }, 1)
     const passed = renderReady({ ...GOAT, fiveHour: { ...GOAT.fiveHour, resetAt: Date.now() - 90_000 } }, 1)
-    assert.match(soon, /resets in 59m/)
+    assert.match(soon, /↻ 59m/)
     const firstRow = (html) => {
-      const start = html.indexOf('ccq-win"')
-      return html.slice(start, html.indexOf('ccq-win"', start + 1))
+      const start = html.indexOf('ccq-row"')
+      return html.slice(start, html.indexOf('ccq-row"', start + 1))
     }
-    // A reset instant that has passed prints no chip on its own row: `resets in 0m`
+    // A reset instant that has passed prints no countdown on its own row: `↻ 0m`
     // beside unmoving numbers reads as a frozen card.
-    assert.doesNotMatch(firstRow(passed), /resets in/, 'the expired row keeps no chip')
-    assert.doesNotMatch(passed, /resets in -\d+m/)
+    assert.doesNotMatch(firstRow(passed), /↻/, 'the expired row keeps no countdown')
+    assert.doesNotMatch(passed, /↻ -\d+m/)
   })
 
   check('the countdown floors rather than rounds, at the unit boundary', () => {
@@ -474,16 +471,16 @@ console.log('values that move')
       const html = renderReady({ ...GOAT, fiveHour: { ...GOAT.fiveHour, resetAt: Date.now() + minutes * 60_000 } }, 1)
       return [...html.matchAll(/class="ccq-reset">([^<]*)</g)].map((match) => match[1])[0]
     }
-    assert.equal(at(59.4), 'resets in 59m', 'four seconds left of the minute is not a minute more')
-    assert.equal(at(60.5), 'resets in 1h0m', 'and the hour rolls over exactly once')
-    assert.equal(at(61.5), 'resets in 1h1m')
+    assert.equal(at(59.4), '↻ 59m', 'four seconds left of the minute is not a minute more')
+    assert.equal(at(60.5), '↻ 1h0m', 'and the hour rolls over exactly once')
+    assert.equal(at(61.5), '↻ 1h1m')
   })
 
   check('an exceeded window says so, and its percentage is clamped', () => {
     const html = renderReady({ ...GOAT, fiveHour: { ...GOAT.fiveHour, exceeded: true, used: 15, cap: 14, percent: 107.1 } }, 1)
-    const row = html.slice(html.indexOf('ccq-win"'), html.indexOf('ccq-win"', html.indexOf('ccq-win"') + 1))
+    const row = html.slice(html.indexOf('ccq-row"'), html.indexOf('ccq-row"', html.indexOf('ccq-row"') + 1))
     assert.match(row, /over limit/)
-    assert.doesNotMatch(row, /resets in/, 'an exceeded window counts up, not down')
+    assert.doesNotMatch(row, /↻/, 'an exceeded window counts up, not down')
     // Defence in depth: the host clamps, the card clamps, and neither prints
     // an impossible number.
     assert.match(row, /ccq-pct[^>]*>100%</)
@@ -518,8 +515,8 @@ console.log('values that move')
   })
 
   check('an over-drawn allowance shows zero remaining, never a negative amount', () => {
-    const html = renderReady({ ...GOAT, monthly: { ...GOAT.monthly, used: 71.1, remaining: -0.88, cap: 70.22, percent: 101.2 } }, 2)
-    assert.match(html, /Remaining<\/span><span[^>]*>\$0\.00</)
+    const html = renderReady({ ...GOAT, monthly: { ...GOAT.monthly, used: 71.1, remaining: -0.88, cap: 70.22, percent: 101.2 } }, 1)
+    assert.match(html, /class="ccq-cost-left"[^>]*>\$0\.00 left</)
     assert.doesNotMatch(html, /\$-\d/)
     assert.match(html, /100%/, 'and the percentage is clamped, not printed as 101%')
   })
@@ -537,7 +534,7 @@ console.log('values that move')
 
   check('a newer report replaces the older numbers outright', () => {
     const later = { ...GOAT, monthly: { ...GOAT.monthly, used: 70.1, remaining: 0.12, cap: 70.22, percent: 99.8 } }
-    const html = renderReady(later, 2)
+    const html = renderReady(later, 1)
     assert.deepEqual(rawIn(html), ['16%', '7%', '100%'])
     assert.match(html, /\$70\.10 \/ \$70\.22/)
     assert.doesNotMatch(html, /\$68\.89/)
@@ -550,10 +547,10 @@ console.log('values that move')
     const html = renderReady({
       ...GOAT,
       monthly: { used: 69.5, remaining: 69.6, cap: 139.1, percent: undefined, capSuspect: true },
-    }, 2)
+    }, 1)
     assert.deepEqual(percentagesIn(html), ['16%', '7%', '—'], 'the monthly row states no percentage')
     assert.doesNotMatch(html, /\$69\.50 \/ \$139\.10/, 'the mixed-instant sum is not printed')
-    assert.doesNotMatch(html, /class="ccq-kv"/, 'and no money rows either')
+    assert.doesNotMatch(html, /class="ccq-cost"/, 'and no money line either')
     assert.match(html, /straddles a billing boundary/)
     assert.doesNotMatch(html, /139/, 'nowhere does the implausible cap surface')
   })
@@ -584,9 +581,9 @@ console.log('values that move')
     const html = renderReady({
       ...GOAT,
       monthly: { used: 69.5, remaining: 0.6, cap: 70.1, percent: 99.1, capSuspect: false },
-    }, 2)
+    }, 1)
     assert.match(html, /\$69\.50 \/ \$70\.10/)
-    assert.match(html, /Remaining<\/span><span[^>]*>\$0\.60</)
+    assert.match(html, /class="ccq-cost-left"[^>]*>\$0\.60 left</)
     assert.doesNotMatch(html, /straddles a billing boundary/)
   })
 
@@ -665,7 +662,7 @@ console.log('what a user hits in practice')
     assert.match(html, /role="button"/)
     assert.match(html, /tabindex="0"/)
     assert.match(html, /aria-expanded="false"/)
-    const opened = renderReady(GOAT, 2)
+    const opened = renderReady(GOAT, 1)
     assert.match(opened, /aria-expanded="true"/)
   })
 
@@ -756,9 +753,10 @@ console.log('the headline stays readable, and the meter only appears with a numb
   })
   check('a window with no percentage renders no meter', () => {
     const html = renderReady({ ...GOAT, fiveHour: { ...GOAT.fiveHour, percent: undefined } }, 1)
-    const start = html.indexOf('ccq-win"')
-    const row = html.slice(start, html.indexOf('ccq-win"', start + 1))
-    assert.doesNotMatch(row, /ccq-track/, 'a zero-width bar under a dash reads as 0% used')
+    const start = html.indexOf('ccq-row"')
+    const row = html.slice(start, html.indexOf('ccq-row"', start + 1))
+    assert.doesNotMatch(row, /ccq-bar-fill/, 'a zero-width bar under a dash reads as 0% used')
+    assert.match(row, /class="ccq-bar"/, 'but the column stays open so the grid holds')
     assert.match(row, /ccq-pct[^>]*>—</)
   })
   check('the collapsed rail clamps the way the card does', () => {

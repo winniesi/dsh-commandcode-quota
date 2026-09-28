@@ -29,7 +29,7 @@ No browser tab, no login, no guessing how much of the plan is left.
 | **Money where it matters** | Used and remaining for the monthly allowance; exact figures for every row on hover |
 | **Instant, then live** | The card is on screen about 2 ms after a restart, and live about a second later |
 | **Quiet when it should be** | No Command Code account? The card does not render at all |
-| **English, one size** | Every word the plugin prints is English whatever language DSH runs in, and every line — title, label, number — is set at the same size |
+| **Two states, one line to start** | It rests as a single line, and one click unfolds every window, the money and the totals. All the copy is English whatever language DSH runs in |
 
 Everything is read from **your own account's data** — window count, caps and percentages come from the API, never assumed. GOAT, Pro, Provider, Max and Teams work; a plan that reports no rolling windows simply renders no rows. (The $1 **Go** tier is the exception — it has no API access, so the card has nothing to render there.)
 
@@ -49,7 +49,7 @@ dsh --version          # needs 0.1.5-rc.1 or newer
 npm i -g @deepseek-ai/dsh@latest
 ```
 
-Note that the plugin's 157 offline checks also **pass** on an older dsh — they never start dsh. So "the checks are green" does not mean it will work once installed.
+Note that the plugin's 156 offline checks also **pass** on an older dsh — they never start dsh. So "the checks are green" does not mean it will work once installed.
 
 ## Install
 
@@ -127,7 +127,7 @@ Two things make the difference:
 
 Unfolded, each window gets a row: the **used percentage** (green below 60 %, amber below 85 %, red above), a meter in the same colour, and a **reset countdown** (`59m`, `6d9h`, `8d1h`).
 
-Resting, the card is a single line — brand mark, plan, meter, used percentage, reset countdown (`↻ 3d20h`) — because that seat is permanent and shared with everything else. It reads the monthly allowance, the figure a budget holder actually checks, and prints no window label: the meter's tooltip names the window and carries the exact percentage. **Click it once** and the 5-hour and weekly windows unfold with their labels; **click it again** for the monthly allowance in money, the remaining credit, the request count and the token totals; a third click folds it back to the line. Every window's figures stay on the card's tooltip even while it is folded, so nothing needs a click to be readable. Collapse the sidebar and the card becomes a 36 px badge showing the **most constrained** window.
+The card has **two states**. Resting, it is a single line — brand mark, plan, meter, used percentage, reset countdown (`↻ 3d20h`) — because that seat is permanent and shared with everything else. It reads the monthly allowance, the figure a budget holder actually checks, and prints no window label: the meter's tooltip names the window and carries the exact percentage. **One click** unfolds all of it: the three windows as labelled rows, the monthly allowance in money (`$61.80 / $70.22 used`, `$8.42 left`, coloured by how much of the month is gone), the request and token totals, and the link out to the billing page. The next click folds it back to the line. Every window's figures stay on the card's tooltip even while it is folded, so nothing needs a click to be readable. Collapse the sidebar and the card becomes a 36 px badge showing the **most constrained** window.
 
 ### Reading the numbers
 
@@ -139,8 +139,8 @@ Resting, the card is a single line — brand mark, plan, meter, used percentage,
 
 The sidebar is about 200 px of content width, and a laptop screen makes small type smaller still. So the card answers one question well — *how deep am I?* — instead of laying out everything the API returns:
 
-- **One type size, and no status line when the numbers are old.** The title, the window labels, the percentage and the notes are all set at 13 px: a 14 px headline over 12 px notes made one small card read as two stacked documents. A stale reading dims the card instead of printing "last success 3m ago" underneath it — the dimming already says the numbers are not live, and the exact age is on the tooltip.
-- **Folded until asked.** The seat is permanent and shared with Settings, so the resting card spends a single line on the monthly allowance instead of three rows nobody asked for. The rolling windows, the money and the totals are each one click away, and warnings — a canceled subscription, a below-threshold balance — stay on screen at every stage rather than waiting behind one.
+- **A small type scale, and no status line when the numbers are old.** Four sizes, each earning its place: 16 px for the brand mark, 13 px for the percentage the resting line leads with, 12 px for the limit rows and the money, 11 px for captions — plan badge, countdown, billing link, totals. That is not decoration: at 196 px of content width, the mark, the plan badge and "View plans and credits" only share one line because the link is 11 px. A stale reading dims the card instead of printing "last success 3m ago" underneath it — the dimming already says the numbers are not live, and the exact age is on the tooltip.
+- **Folded until asked.** The seat is permanent and shared with Settings, so the resting card spends a single line on the monthly allowance instead of three rows nobody asked for. Everything else — the rolling windows, the money, the totals, the billing link — is one click away and arrives together, because a half-unfolded card that shows the windows but not the money answers no question either state does not. Warnings — a canceled subscription, a below-threshold balance — stay on screen in both states rather than waiting behind the click.
 - **Money only for the monthly allowance.** The 5-hour and weekly windows are pass/fail gates, not budgets; their dollar rows told a user nothing they could act on. Hover still shows exact figures.
 - **No pace verdict, no burn-rate forecast.** "Over pace" cannot be acted on by someone who has work to do, and a projected exhaustion date assumes a constant burn rate that credit usage never has. The host still exposes `projection` in its JSON for scripts.
 - **Nothing silent.** A row that disappears because its endpoint failed says so; a failure with nothing to fall back on says what went wrong in one readable line, with the full diagnostic text on hover.
@@ -310,7 +310,7 @@ The CLI's human-readable output is English; `--json` is language-neutral and is 
 # 1. React is needed only by the component test and the preview page
 mkdir .devdeps && cd .devdeps && npm init -y && npm install react@18 react-dom@18 && cd ..
 
-# 2. Everything at once — 157 checks, one verdict, no network, no real credentials
+# 2. Everything at once — 156 checks, one verdict, no network, no real credentials
 node scripts/check.mjs            # release check: static + secret scan + every suite below
 node scripts/verify.mjs           # add --live to also hit a real account
 node scripts/verify.mjs --quiet   # one summary line per suite
@@ -319,7 +319,7 @@ node scripts/verify.mjs --quiet   # one summary line per suite
 ```text
 ok    quota   (discovery contract)            21 checks
 ok    host    (route, cache, concurrency)     30 checks
-ok    client  (rendering, boundaries)         70 checks
+ok    client  (rendering, boundaries)         69 checks
 ok    dynamic (drift, resets, bad payloads)   33 checks
 ok    cli     (arguments, exit codes)          3 checks
 ok    audit   (credentials, host paths)
