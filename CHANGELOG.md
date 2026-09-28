@@ -39,7 +39,7 @@ and the cordis loader id, not a document version, so it does not move.
   file parses, every `.js`/`.mjs` passes `node --check`, no credential or
   machine-specific path is committed, the package identity is consistent across
   `package.json`, `package-lock.json`, `cordis.patch.yml` and `screenshots.json`,
-  and then the 156 offline checks in `scripts/verify.mjs`.
+  and then the 157 offline checks in `scripts/verify.mjs`.
 - **`SECURITY.md`** — supported versions, private reporting, the exact list of what
   the plugin reads, writes and sends, and the credential-resolution order.
 - **`package-lock.json`** — the React dependency tree, so CI installs what the
@@ -47,6 +47,17 @@ and the cordis loader id, not a document version, so it does not move.
 
 ### Changed
 
+- **The resting card is one line.** It used to keep the boxed header and one
+  window row; it is now a strip — brand mark, plan, meter, percentage, reset
+  countdown (`↻ 3d20h`) — the height of a single line, which is all the sidebar
+  seat can afford when the transcript above it wants the room. The strip prints no
+  window label (the meter's tooltip names the window and the exact percentage),
+  and the meter is the only part that gives way when the sidebar is narrow: a
+  fixed minimum there is what pushed the countdown past the card's own padding at
+  200 px. The boxed header now appears only once something is unfolded under it.
+  `preview/build.mjs` leaves its dark column at rest, so the README image shows
+  the strip next to the rail badge and the fully unfolded card, and
+  `assets/screenshot.png` was regenerated from it.
 - **The repository describes this fork, not upstream.** Every install command,
   CI badge, clone URL, security-reporting link, `homepage`/`repository` field and
   the bundle patch's comment point at
@@ -100,7 +111,7 @@ and the cordis loader id, not a document version, so it does not move.
   below-threshold balance) stay on screen at every stage. A plan that reports no
   monthly window — or whose monthly percentage the host withheld because the read
   straddled a billing boundary — rests on the tightest trustworthy row instead of
-  a bare dash, matching what the collapsed rail badge already does. The behavior is covered by eight new checks in the
+  a bare dash, matching what the collapsed rail badge already does. The behavior is covered by nine new checks in the
   client suite, which now drives the card through stages 0, 1 and 2.
 - **Merged everything the shared repository changed after the move.** The data
   layer grew 706 → 711 lines, the dynamic and client suites were extended, both

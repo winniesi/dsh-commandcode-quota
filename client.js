@@ -226,6 +226,25 @@ window.__ModuleLoader__.load({
 .ccq-track{position:relative;height:6px;margin-top:7px;border-radius:3px;overflow:hidden;
   background:var(--dsw-alias-interactive-bg-hover)}
 .ccq-fill{display:block;height:100%;border-radius:3px;transition:width 240ms ease,background 240ms ease}
+/* The resting card is one line — mark, plan, meter, percentage, countdown — so it
+   drops the box padding and radius with it. Everything here is a modifier on the
+   expanded card below, never a second size: the meter keeps its colour and its
+   transition and only loses its own line and its height. */
+.ccq-card.ccq-mini{padding:8px 14px;border-width:.5px;border-radius:10px}
+.ccq-strip{display:flex;align-items:center;gap:8px;line-height:1.2}
+.ccq-mark{flex:none;font-weight:600;color:var(--dsw-alias-label-primary)}
+/* The meter is the only part that gives: it is a second reading of a number that
+   is already printed beside it, so at 200 px of sidebar it shrinks — down to
+   nothing — before the countdown or the plan badge may lose a character. A fixed
+   minimum here is what pushed the countdown past the card's own padding. */
+.ccq-strip .ccq-track{flex:1 1 0;min-width:0;height:4px;margin-top:0;border-radius:2px}
+.ccq-strip .ccq-fill{border-radius:2px}
+.ccq-strip .ccq-plan{max-width:80px}
+/* With no reported percentage the meter is gone (a zero-width bar reads as 0%),
+   and the auto margin is what still holds the numbers to the right edge. */
+.ccq-strip .ccq-pct{margin-left:auto}
+.ccq-strip-reset{flex:none;color:var(--dsw-alias-label-caption);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
 .ccq-warn{display:flex;align-items:center;gap:6px;margin-top:10px;padding:6px 8px;border-radius:7px;
   background:var(--dsw-alias-interactive-bg-hover-danger);
   color:var(--dsw-alias-state-error-primary)}
@@ -545,6 +564,46 @@ window.__ModuleLoader__.load({
       return { state, refresh }
     }
 
+    /**
+     * The resting card: one horizontal line, no header and no window label.
+     *
+     * Reading order is left to right — brand mark, plan, meter, used percentage,
+     * reset countdown — so the whole answer fits in the height of a line and the
+     * sidebar keeps its room for the transcript above it. The window the strip
+     * speaks for is not printed: the meter and the countdown carry it on their
+     * tooltips, which is the same bargain the rest of the card makes.
+     *
+     * @param props.row - the window `headlineRow` picked.
+     * @param props.planName - the account's plan, straight from the report.
+     */
+    function SummaryStrip({ row, planName, t }) {
+      const percent = percentOf(row.percent)
+      const countdown = shortCountdown(row.resetAt)
+      const reset = row.exceeded
+        ? t('overLimit')
+        : countdown === undefined ? undefined : `↻ ${countdown}`
+      return h('div', { className: 'ccq-strip' },
+        h('span', { className: 'ccq-mark', title: 'Command Code', 'aria-label': 'Command Code' }, '⌘'),
+        h('span', { className: 'ccq-plan', title: planName }, planName),
+        // No percentage means no meter — a zero-width bar reads as "0% used" —
+        // and the auto margin on the percentage still holds the numbers right.
+        percent === undefined ? null : h('div', {
+          className: 'ccq-track',
+          title: `${format(t('usedOf'), { label: t(row.label) })} ${percentText(percent)}`,
+        },
+          h('span', {
+            className: 'ccq-fill',
+            style: { width: `${Math.max(0, Math.min(100, percent))}%`, background: levelToken(percent) },
+          }),
+        ),
+        h('span', { className: 'ccq-pct' }, headlinePercent(percent)),
+        reset === undefined ? null : h('span', {
+          className: 'ccq-strip-reset',
+          title: `${t(row.label)} · ${format(t('reset'), { time: countdown ?? '—' })}`,
+        }, reset),
+      )
+    }
+
     /** One credit window: label, percentage, the meter, and the reset chip. */
     function WindowRow({ row, t }) {
       const percent = percentOf(row.percent)
@@ -722,6 +781,21 @@ window.__ModuleLoader__.load({
         ? Date.now() - report.staleAgeMs
         : state.at
       const planName = report?.plan?.name ?? 'Command Code'
+      // The one-line card is a different shape, not a smaller one: no header, no
+      // window label, its own padding. Everything below it — alerts, the retry
+      // hint, the "no windows" note — keeps the boxed padding.
+      const mini = stage === STAGE_SUMMARY && report !== undefined && rows.length > 0
+      const degraded = report === undefined || !Array.isArray(report.failures) ? 0 : report.failures.length
+      // Account-level warnings stay on screen at every stage: hiding "subscription
+      // canceled" behind a click would be a disservice, and a healthy account has
+      // none to show. Same for a window that vanished because its endpoint failed.
+      const alerts = report === undefined ? [] : [
+        ...warningsOf(report, t).map((warning, index) => h('div', {
+          key: `warn-${String(index)}`,
+          className: 'ccq-warn',
+        }, warning)),
+        degraded === 0 ? null : h('div', { key: 'degraded', className: 'ccq-note' }, format(t('degraded'), { count: degraded })),
+      ].filter((part) => part !== null)
 
       let body
       if (report === undefined) {
@@ -733,26 +807,10 @@ window.__ModuleLoader__.load({
         ]
       } else if (rows.length === 0) {
         body = [h('div', { key: 'none', className: 'ccq-note' }, t('none'))]
+      } else if (mini) {
+        body = [h(SummaryStrip, { key: 'strip', row: headlineRow(rows), planName, t }), ...alerts]
       } else {
-        const degraded = Array.isArray(report.failures) ? report.failures.length : 0
-        // Resting, the card spends its one row on the monthly allowance. The
-        // rolling windows join it on the first click — and the account-level
-        // warnings below stay on screen at every stage: hiding "subscription
-        // canceled" behind two clicks would be a disservice, and a healthy
-        // account has none to show.
-        const shown = stage === STAGE_SUMMARY
-          ? [headlineRow(rows)].filter((row) => row !== undefined)
-          : rows
-        body = [
-          ...shown.map((row) => h(WindowRow, { key: row.key, row, t })),
-          ...warningsOf(report, t).map((warning, index) => h('div', {
-            key: `warn-${String(index)}`,
-            className: 'ccq-warn',
-          }, warning)),
-          // A window that silently disappears because its endpoint failed is a
-          // bug the user would blame on their account. Say it happened.
-          degraded === 0 ? null : h('div', { key: 'degraded', className: 'ccq-note' }, format(t('degraded'), { count: degraded })),
-        ].filter((part) => part !== null)
+        body = [...rows.map((row) => h(WindowRow, { key: row.key, row, t })), ...alerts]
       }
 
       // A failed read keeps the old retry behaviour: the click that would unfold
@@ -764,10 +822,11 @@ window.__ModuleLoader__.load({
       const unfolded = stage > STAGE_SUMMARY
 
       return h('div', {
-        className: `ccq-card${stale ? ' ccq-stale' : ''}`,
+        className: `ccq-card${mini ? ' ccq-mini' : ''}${stale ? ' ccq-stale' : ''}`,
         // Everything the folded card does not have room to say lives here: each
         // window's exact figures, why a window is missing, and — when the card is
-        // dimmed — how old the reading is.
+        // dimmed — how old the reading is. The strip's own parts carry the window
+        // they speak for, since the strip itself prints no label.
         title: [
           rows.length === 0 ? undefined : summaryTitle(rows, t),
           stale ? format(t('stale'), { age: ageOf(staleAt) ?? '—' }) : undefined,
@@ -783,7 +842,9 @@ window.__ModuleLoader__.load({
           toggle()
         },
       },
-        h('div', { className: 'ccq-head' },
+        // The strip is the header and the body at once, so the boxed header only
+        // appears once there is something unfolded under it.
+        mini ? null : h('div', { className: 'ccq-head' },
           h('span', { className: 'ccq-title' }, 'Command Code'),
           h('span', { className: 'ccq-plan', title: planName }, planName),
           h('span', { className: `ccq-chevron${unfolded ? ' ccq-open' : ''}` }, '▾'),

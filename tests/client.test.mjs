@@ -304,17 +304,31 @@ console.log('English copy, whatever dsh is set to')
 
 console.log('progressive disclosure')
 {
-  check('the resting card answers with one row: the monthly allowance', () => {
+  check('the resting card is one line: mark, plan, meter, percentage, countdown', () => {
     const html = renderReady(GOAT)
-    assert.deepEqual(labelsIn(html), ['Monthly'])
+    assert.match(html, /class="ccq-strip"/)
+    assert.match(html, /class="ccq-mark"[^>]*>⌘</, 'the brand mark stands in for the title')
+    assert.match(html, /class="ccq-plan"[^>]*>GOAT</)
+    assert.match(html, /class="ccq-track"/, 'the meter is inline, not under a label row')
     assert.deepEqual(percentagesIn(html), ['98%'])
+    assert.match(html, /class="ccq-strip-reset"[^>]*>↻ \d+d\d+h</)
+    // Not a shrunken card: the boxed header and the window rows are absent, so
+    // the whole resting state is the height of one line.
+    assert.doesNotMatch(html, /ccq-head/)
+    assert.doesNotMatch(html, /ccq-win"/)
+    assert.doesNotMatch(html, /ccq-chevron/)
     assert.doesNotMatch(html, /ccq-detail/)
   })
-  check('the resting card still names every window on its tooltip', () => {
-    // Folded, not hidden: a hover tells the whole story without the click.
+  check('the strip says which window it speaks for on the meter tooltip', () => {
     const html = renderReady(GOAT)
-    assert.match(html, /title="5-hour 15\.6% \(left \$11\.82\) · Weekly 6\.6% \(left \$32\.69\) · Monthly 98\.1%/)
-    assert.match(html, /title="Monthly used \$68\.89 \/ \$70\.21/)
+    assert.match(html, /class="ccq-track" title="Monthly used 98\.1%"/)
+    assert.match(html, /class="ccq-strip-reset" title="Monthly · resets in /)
+  })
+  check('the resting card still names every window on its tooltip', () => {
+    // Folded, not hidden: the strip prints no window label, so the card's own
+    // tooltip has to carry all three windows and what is left in each.
+    const html = renderReady(GOAT)
+    assert.match(html, /title="5-hour 15\.6% \(left \$11\.82\) · Weekly 6\.6% \(left \$32\.69\) · Monthly 98\.1% \(left \$1\.32\)/)
   })
   check('the first click unfolds the rolling windows, and nothing more', () => {
     const html = renderReady(GOAT, 1)
@@ -341,8 +355,8 @@ console.log('progressive disclosure')
       fiveHour: { ...GOAT.fiveHour, percent: 16 },
       weekly: { ...GOAT.weekly, percent: 42 },
     })
-    assert.deepEqual(labelsIn(html), ['Weekly'])
     assert.deepEqual(percentagesIn(html), ['42%'])
+    assert.match(html, /class="ccq-track" title="Weekly used 42\.0%"/)
   })
   check('a withheld monthly reading hands the resting row to the tightest window', () => {
     // Same rule as the rail badge: when the host refuses to stand behind the
@@ -352,14 +366,14 @@ console.log('progressive disclosure')
       ...GOAT,
       monthly: { used: 69.5, remaining: 69.6, cap: 139.1, percent: undefined, capSuspect: true },
     })
-    assert.deepEqual(labelsIn(html), ['5-hour'])
     assert.deepEqual(percentagesIn(html), ['16%'])
+    assert.match(html, /class="ccq-track" title="5-hour used 15\.6%"/)
   })
   check('a warning stays on screen while the card rests', () => {
     // Unfolding is for figures, not for alerts: a canceled subscription or a
     // below-threshold balance must not wait behind two clicks.
     const html = renderReady({ ...GOAT, plan: { ...GOAT.plan, cancelAtPeriodEnd: true } })
-    assert.equal(labelsIn(html).length, 1, 'still one usage row')
+    assert.match(html, /class="ccq-strip"/, 'still the one-line card')
     assert.match(html, /Subscription canceled/)
   })
 }
@@ -409,7 +423,8 @@ console.log('plan-agnostic rendering')
     }
   })
   check('the exact reset instant stays on the row tooltip', () => {
-    const html = renderReady(GOAT)
+    // One click in: the resting strip only has room for the countdown.
+    const html = renderReady(GOAT, 1)
     assert.match(html, /title="[^"]*\d\d-\d\d \d\d:\d\d/)
   })
 }

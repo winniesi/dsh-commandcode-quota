@@ -12,11 +12,11 @@ No browser tab, no login, no guessing how much of the plan is left.
 [![dsh](https://img.shields.io/badge/dsh-%5E0.1.5--rc.1-blue)](#requirements)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
-<img src="assets/screenshot.png" alt="The quota card in the sidebar: light rail, light expanded, dark expanded" width="820">
+<img src="assets/screenshot.png" alt="The quota card in the sidebar: the collapsed rail, the fully unfolded card in light, and the one-line resting card in dark" width="820">
 
 </div>
 
-> **This is a fork of [Jovan1666/dsh-commandcode-quota](https://github.com/Jovan1666/dsh-commandcode-quota).** It keeps the same package name — `dsh-commandcode-quota` is both the install spec and the cordis loader id — and adds local changes to the card: three-step disclosure, a single type size, no stale-age line, and English-only copy across the card, the CLI and the host messages.
+> **This is a fork of [Jovan1666/dsh-commandcode-quota](https://github.com/Jovan1666/dsh-commandcode-quota).** It keeps the same package name — `dsh-commandcode-quota` is both the install spec and the cordis loader id — and adds local changes to the card: a one-line resting strip, three-step disclosure, a single type size, no stale-age line, and English-only copy across the card, the CLI and the host messages.
 
 ---
 
@@ -49,7 +49,7 @@ dsh --version          # needs 0.1.5-rc.1 or newer
 npm i -g @deepseek-ai/dsh@latest
 ```
 
-Note that the plugin's 156 offline checks also **pass** on an older dsh — they never start dsh. So "the checks are green" does not mean it will work once installed.
+Note that the plugin's 157 offline checks also **pass** on an older dsh — they never start dsh. So "the checks are green" does not mean it will work once installed.
 
 ## Install
 
@@ -125,9 +125,9 @@ Two things make the difference:
 | **Weekly** | Rolling 7-day limit | `$35` |
 | **Monthly** | The billing period's credit allowance | `$70` |
 
-Each row shows the **used percentage** (green below 60 %, amber below 85 %, red above), a meter in the same colour, and a **reset countdown** (`59m`, `6d9h`, `8d1h`).
+Unfolded, each window gets a row: the **used percentage** (green below 60 %, amber below 85 %, red above), a meter in the same colour, and a **reset countdown** (`59m`, `6d9h`, `8d1h`).
 
-The card rests on one row — the monthly allowance — because that is the figure a budget holder actually checks. **Click it once** and the 5-hour and weekly windows unfold beside it; **click it again** for the monthly allowance in money, the remaining credit, the request count and the token totals; a third click folds it back. Every window's figures stay on the card's tooltip even while it is folded, so nothing needs a click to be readable. Collapse the sidebar and the card becomes a 36 px badge showing the **most constrained** window.
+Resting, the card is a single line — brand mark, plan, meter, used percentage, reset countdown (`↻ 3d20h`) — because that seat is permanent and shared with everything else. It reads the monthly allowance, the figure a budget holder actually checks, and prints no window label: the meter's tooltip names the window and carries the exact percentage. **Click it once** and the 5-hour and weekly windows unfold with their labels; **click it again** for the monthly allowance in money, the remaining credit, the request count and the token totals; a third click folds it back to the line. Every window's figures stay on the card's tooltip even while it is folded, so nothing needs a click to be readable. Collapse the sidebar and the card becomes a 36 px badge showing the **most constrained** window.
 
 ### Reading the numbers
 
@@ -140,7 +140,7 @@ The card rests on one row — the monthly allowance — because that is the figu
 The sidebar is about 200 px of content width, and a laptop screen makes small type smaller still. So the card answers one question well — *how deep am I?* — instead of laying out everything the API returns:
 
 - **One type size, and no status line when the numbers are old.** The title, the window labels, the percentage and the notes are all set at 13 px: a 14 px headline over 12 px notes made one small card read as two stacked documents. A stale reading dims the card instead of printing "last success 3m ago" underneath it — the dimming already says the numbers are not live, and the exact age is on the tooltip.
-- **Folded until asked.** The seat is permanent and shared with Settings, so the resting card spends its single row on the monthly allowance instead of three rows nobody asked for. The rolling windows, the money and the totals are each one click away, and warnings — a canceled subscription, a below-threshold balance — stay on screen at every stage rather than waiting behind one.
+- **Folded until asked.** The seat is permanent and shared with Settings, so the resting card spends a single line on the monthly allowance instead of three rows nobody asked for. The rolling windows, the money and the totals are each one click away, and warnings — a canceled subscription, a below-threshold balance — stay on screen at every stage rather than waiting behind one.
 - **Money only for the monthly allowance.** The 5-hour and weekly windows are pass/fail gates, not budgets; their dollar rows told a user nothing they could act on. Hover still shows exact figures.
 - **No pace verdict, no burn-rate forecast.** "Over pace" cannot be acted on by someone who has work to do, and a projected exhaustion date assumes a constant burn rate that credit usage never has. The host still exposes `projection` in its JSON for scripts.
 - **Nothing silent.** A row that disappears because its endpoint failed says so; a failure with nothing to fall back on says what went wrong in one readable line, with the full diagnostic text on hover.
@@ -310,7 +310,7 @@ The CLI's human-readable output is English; `--json` is language-neutral and is 
 # 1. React is needed only by the component test and the preview page
 mkdir .devdeps && cd .devdeps && npm init -y && npm install react@18 react-dom@18 && cd ..
 
-# 2. Everything at once — 156 checks, one verdict, no network, no real credentials
+# 2. Everything at once — 157 checks, one verdict, no network, no real credentials
 node scripts/check.mjs            # release check: static + secret scan + every suite below
 node scripts/verify.mjs           # add --live to also hit a real account
 node scripts/verify.mjs --quiet   # one summary line per suite
@@ -319,7 +319,7 @@ node scripts/verify.mjs --quiet   # one summary line per suite
 ```text
 ok    quota   (discovery contract)            21 checks
 ok    host    (route, cache, concurrency)     30 checks
-ok    client  (rendering, boundaries)         69 checks
+ok    client  (rendering, boundaries)         70 checks
 ok    dynamic (drift, resets, bad payloads)   33 checks
 ok    cli     (arguments, exit codes)          3 checks
 ok    audit   (credentials, host paths)

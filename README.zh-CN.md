@@ -12,11 +12,11 @@
 [![dsh](https://img.shields.io/badge/dsh-%5E0.1.5--rc.1-blue)](#环境要求)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](README.md)
 
-<img src="assets/screenshot.png" alt="侧边栏里的额度卡片：浅色导轨、浅色展开、深色展开" width="820">
+<img src="assets/screenshot.png" alt="侧边栏里的额度卡片：浅色导轨、浅色完全展开、深色静止时的一行" width="820">
 
 </div>
 
-> **这是 [Jovan1666/dsh-commandcode-quota](https://github.com/Jovan1666/dsh-commandcode-quota) 的 fork。** 包名保持不变——`dsh-commandcode-quota` 既是安装 spec，也是 cordis 的 loader id——本地改动集中在卡片上：三段展开、单一字号、去掉「上次成功」那一行，以及卡片 / CLI / 宿主文案全部英文。
+> **这是 [Jovan1666/dsh-commandcode-quota](https://github.com/Jovan1666/dsh-commandcode-quota) 的 fork。** 包名保持不变——`dsh-commandcode-quota` 既是安装 spec，也是 cordis 的 loader id——本地改动集中在卡片上：静止时的一行条、三段展开、单一字号、去掉「上次成功」那一行，以及卡片 / CLI / 宿主文案全部英文。
 
 ---
 
@@ -49,7 +49,7 @@ dsh --version          # 需要 0.1.5-rc.1 或更高
 npm i -g @deepseek-ai/dsh@latest
 ```
 
-注意：插件的 156 项离线校验**跑得过**也不需要这个版本——那些校验不启动 dsh。
+注意：插件的 157 项离线校验**跑得过**也不需要这个版本——那些校验不启动 dsh。
 所以「校验全绿」不代表装上去能用。
 
 ## 安装
@@ -126,9 +126,9 @@ New-Item -ItemType Junction -Path "$dsh\profiles\web\node_modules\dsh-commandcod
 | **每周** | 滚动 7 天限制 | `$35` |
 | **月度** | 本计费周期的额度总额 | `$70` |
 
-卡片默认只留一行：**月度额度**——决定这个月还够不够用的就是它。**点一下**，5 小时和每周两条滚动窗口加进来；**再点一下**，展开月度额度金额、剩余、请求数、token 用量；第三次点击折回去。折叠时每一行的精确数字仍在卡片的悬停提示里，所以没有任何信息非点不可。
+静止时卡片就是**一行**：品牌标记、套餐、进度条、已用百分比、重置倒计时（`↻ 3d20h`）——这个位置常驻、又和别的入口共用，一行能把答案说完。它读的是**月度额度**，也就是决定这个月还够不够用的那个数；这一行不印窗口名，窗口名和精确百分比在进度条的悬停提示里。**点一下**，5 小时和每周两条滚动窗口带着标签展开；**再点一下**，展开月度额度金额、剩余、请求数、token 用量；第三次点击折回那一行。折叠时每个窗口的精确数字仍在卡片的悬停提示里，所以没有任何信息非点不可。
 
-每行显示**已用百分比**（低于 60% 绿、低于 85% 黄、更高红）、同色进度条、以及**重置倒计时**（`59m` / `6d9h` / `8d1h`）。把侧边栏收成导轨，卡片变成 36px 圆徽，显示**最紧的那条**窗口的百分比。
+展开后每个窗口一行：**已用百分比**（低于 60% 绿、低于 85% 黄、更高红）、同色进度条、以及**重置倒计时**（`59m` / `6d9h` / `8d1h`）。把侧边栏收成导轨，卡片变成 36px 圆徽，显示**最紧的那条**窗口的百分比。
 
 ### 数字口径
 
@@ -311,7 +311,7 @@ updated today 19:51
 # 1. React 只有组件测试和预览页需要
 mkdir .devdeps && cd .devdeps && npm init -y && npm install react@18 react-dom@18 && cd ..
 
-# 2. 一次跑完全部 —— 156 项，一个结论，不碰网络也不读真实凭据
+# 2. 一次跑完全部 —— 157 项，一个结论，不碰网络也不读真实凭据
 node scripts/check.mjs            # 发布检查：静态检查 + 密钥扫描 + 下面全部套件
 node scripts/verify.mjs           # 加 --live 会额外打真实账号
 node scripts/verify.mjs --quiet   # 每个套件只打一行汇总
@@ -320,7 +320,7 @@ node scripts/verify.mjs --quiet   # 每个套件只打一行汇总
 ```text
 ok    quota   (discovery contract)            21 checks
 ok    host    (route, cache, concurrency)     30 checks
-ok    client  (rendering, boundaries)         69 checks
+ok    client  (rendering, boundaries)         70 checks
 ok    dynamic (drift, resets, bad payloads)   33 checks
 ok    cli     (arguments, exit codes)          3 checks
 ok    audit   (credentials, host paths)
