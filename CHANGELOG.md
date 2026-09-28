@@ -47,12 +47,20 @@ and the cordis loader id, not a document version, so it does not move.
 
 ### Changed
 
-- **The card is Chinese-only.** Every word it draws is Chinese whatever language
-  `dsh` runs in: the copy follows the interface language before, so an
-  English-language harness got an English card. Both dictionaries still register
-  — the English table is what keeps this fork diffable against upstream — but the
-  card no longer binds to the locale. The host-side text is untouched: the `ccq`
-  CLI already printed Chinese, and `/quota` still prints English.
+- **Every surface the plugin prints is English.** Three surfaces used to run on
+  two rules: the card followed the interface language, the `ccq` CLI printed
+  Chinese, and `/quota` printed English — so the same account read differently
+  depending on where you looked. All three are English now, whatever `dsh` is set
+  to. The card renders from its `en` table instead of binding to the locale (both
+  dictionaries still register: the Chinese table is what keeps this fork diffable
+  against upstream), and the CLI's usage text, window lines, countdowns, reset
+  phrasing, credential source and error messages were translated with it. The
+  host's `QuotaError` messages — they surface on the card's tooltip and on the
+  CLI's stderr — are English too. Two small side effects: the CLI's `updated`
+  stamp is a fixed `today HH:mm` / `MM-DD HH:mm` rather than `toLocaleString`, so
+  the README samples stay byte-stable, and both READMEs' sample blocks are now
+  generated from real CLI output. Code comments are untouched (still the mix of
+  English and Chinese they were).
 - **One type size across the whole card.** The title, the window labels, the
   percentage and the notes are all 13 px now; weight still marks the headline. A
   14 px headline over 12 px notes made a card this small read as two stacked

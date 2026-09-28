@@ -170,7 +170,7 @@ function applyAgainst(reactImpl, report = GOAT, localeName = 'zh') {
         return () => {}
       },
       // Reads at call time, like the real binding. `localeName` lets a test
-      // pretend the interface language is not Chinese.
+      // pretend the interface language is something else.
       bind: () => (key) => seen.dictionaries[localeName]?.[key] ?? key,
     },
     slots: {
@@ -255,7 +255,7 @@ console.log('window order and percentage-first values')
   // unfolded, which is where the ordering and the per-row figures are observable.
   const html = renderReady(GOAT, 1)
   check('rows run 5 hours, weekly, monthly top to bottom', () => {
-    assert.deepEqual(labelsIn(html), ['5 小时', '每周', '月度'])
+    assert.deepEqual(labelsIn(html), ['5-hour', 'Weekly', 'Monthly'])
   })
   check('the headline is the used percentage rounded like the official dashboard', () => {
     assert.deepEqual(percentagesIn(html), ['16%', '7%', '98%'])
@@ -271,9 +271,9 @@ console.log('window order and percentage-first values')
   check('each row carries its own reset chip', () => {
     const chips = [...html.matchAll(/class="ccq-reset">([^<]*)</g)].map((match) => match[1])
     assert.equal(chips.length, 3)
-    assert.match(chips[0], /^\d+h\d+m 后重置$/, `5-hour chip was ${chips[0]}`)
-    assert.match(chips[1], /^\d+d\d+h 后重置$/, `weekly chip was ${chips[1]}`)
-    assert.match(chips[2], /^\d+d\d+h 后重置$/, `monthly chip was ${chips[2]}`)
+    assert.match(chips[0], /^resets in \d+h\d+m$/, `5-hour chip was ${chips[0]}`)
+    assert.match(chips[1], /^resets in \d+d\d+h$/, `weekly chip was ${chips[1]}`)
+    assert.match(chips[2], /^resets in \d+d\d+h$/, `monthly chip was ${chips[2]}`)
   })
   check('the warning band applies between 60% and 85%', () => {
     const warn = renderReady({ ...GOAT, fiveHour: { ...GOAT.fiveHour, used: 10, cap: 14, percent: 71.4 } }, 1)
@@ -288,17 +288,17 @@ console.log('window order and percentage-first values')
   })
 }
 
-console.log('Chinese copy, whatever dsh is set to')
+console.log('English copy, whatever dsh is set to')
 {
-  check('an English interface still gets a Chinese card', () => {
-    const { seen } = applyAgainst(stubbedReact([0, { phase: 'ready', report: GOAT }]), GOAT, 'en')
+  check('a Chinese interface still gets an English card', () => {
+    const { seen } = applyAgainst(stubbedReact([0, { phase: 'ready', report: GOAT }]), GOAT, 'zh')
     const html = renderToStaticMarkup(React.createElement(seen.component, {
       wide: true,
       ...seen.options.inject(),
     }))
-    assert.match(html, /月度/)
-    assert.match(html, /后重置/)
-    assert.doesNotMatch(html, /Monthly|resets in|left/, 'no English reaches the card')
+    assert.match(html, /Monthly/)
+    assert.match(html, /resets in/)
+    assert.doesNotMatch(html, /[\u4e00-\u9fff]/, 'no Chinese reaches the card')
   })
 }
 
@@ -306,26 +306,26 @@ console.log('progressive disclosure')
 {
   check('the resting card answers with one row: the monthly allowance', () => {
     const html = renderReady(GOAT)
-    assert.deepEqual(labelsIn(html), ['月度'])
+    assert.deepEqual(labelsIn(html), ['Monthly'])
     assert.deepEqual(percentagesIn(html), ['98%'])
     assert.doesNotMatch(html, /ccq-detail/)
   })
   check('the resting card still names every window on its tooltip', () => {
     // Folded, not hidden: a hover tells the whole story without the click.
     const html = renderReady(GOAT)
-    assert.match(html, /title="5 小时 15\.6% \(剩 \$11\.82\) · 每周 6\.6% \(剩 \$32\.69\) · 月度 98\.1%/)
-    assert.match(html, /title="月度已用 \$68\.89 \/ \$70\.21/)
+    assert.match(html, /title="5-hour 15\.6% \(left \$11\.82\) · Weekly 6\.6% \(left \$32\.69\) · Monthly 98\.1%/)
+    assert.match(html, /title="Monthly used \$68\.89 \/ \$70\.21/)
   })
   check('the first click unfolds the rolling windows, and nothing more', () => {
     const html = renderReady(GOAT, 1)
-    assert.deepEqual(labelsIn(html), ['5 小时', '每周', '月度'])
+    assert.deepEqual(labelsIn(html), ['5-hour', 'Weekly', 'Monthly'])
     assert.doesNotMatch(html, /ccq-detail/)
   })
   check('the second click adds the money-and-totals panel', () => {
     const html = renderReady(GOAT, 2)
-    assert.deepEqual(labelsIn(html), ['5 小时', '每周', '月度'])
+    assert.deepEqual(labelsIn(html), ['5-hour', 'Weekly', 'Monthly'])
     assert.match(html, /ccq-detail/)
-    assert.match(html, /17,859 请求 · 100%/)
+    assert.match(html, /17,859 requests · 100%/)
   })
   check('the chevron and aria-expanded follow the unfolded state', () => {
     assert.doesNotMatch(renderReady(GOAT), /ccq-chevron ccq-open/)
@@ -341,7 +341,7 @@ console.log('progressive disclosure')
       fiveHour: { ...GOAT.fiveHour, percent: 16 },
       weekly: { ...GOAT.weekly, percent: 42 },
     })
-    assert.deepEqual(labelsIn(html), ['每周'])
+    assert.deepEqual(labelsIn(html), ['Weekly'])
     assert.deepEqual(percentagesIn(html), ['42%'])
   })
   check('a withheld monthly reading hands the resting row to the tightest window', () => {
@@ -352,7 +352,7 @@ console.log('progressive disclosure')
       ...GOAT,
       monthly: { used: 69.5, remaining: 69.6, cap: 139.1, percent: undefined, capSuspect: true },
     })
-    assert.deepEqual(labelsIn(html), ['5 小时'])
+    assert.deepEqual(labelsIn(html), ['5-hour'])
     assert.deepEqual(percentagesIn(html), ['16%'])
   })
   check('a warning stays on screen while the card rests', () => {
@@ -360,7 +360,7 @@ console.log('progressive disclosure')
     // below-threshold balance must not wait behind two clicks.
     const html = renderReady({ ...GOAT, plan: { ...GOAT.plan, cancelAtPeriodEnd: true } })
     assert.equal(labelsIn(html).length, 1, 'still one usage row')
-    assert.match(html, /订阅已取消/)
+    assert.match(html, /Subscription canceled/)
   })
 }
 
@@ -376,20 +376,20 @@ console.log('plan-agnostic rendering')
     const html = renderReady(PROVIDER)
     assert.match(html, /class="ccq-plan"[^>]*>Provider</)
     assert.equal(labelsIn(html).length, 0)
-    assert.match(html, /该套餐未上报额度窗口/)
+    assert.match(html, /this plan reports no credit windows/)
   })
   check('the detail body carries the monthly allowance and the period totals', () => {
     const html = renderReady(GOAT, 2)
     const detail = html.slice(html.indexOf('ccq-detail'))
-    assert.match(detail, /月度已用<\/span><span[^>]*>\$68\.89 \/ \$70\.21</)
-    assert.match(detail, /剩余<\/span><span[^>]*>\$1\.32</)
-    assert.match(detail, /17,859 请求 · 100%/)
-    assert.match(detail, /输入 3\.34B \/ 输出 16\.32M/)
+    assert.match(detail, /Monthly used<\/span><span[^>]*>\$68\.89 \/ \$70\.21</)
+    assert.match(detail, /Remaining<\/span><span[^>]*>\$1\.32</)
+    assert.match(detail, /17,859 requests · 100%/)
+    assert.match(detail, /in 3\.34B \/ out 16\.32M/)
   })
   check('remaining credit carries the monthly urgency colour', () => {
     const html = renderReady(GOAT, 2)
     const detail = html.slice(html.indexOf('ccq-detail'))
-    assert.match(detail, /剩余<\/span><span class="ccq-kv-value" style="color:var\(--dsw-alias-state-error-primary\)">\$1\.32/)
+    assert.match(detail, /Remaining<\/span><span class="ccq-kv-value" style="color:var\(--dsw-alias-state-error-primary\)">\$1\.32/)
   })
   check('the detail body leaves the rolling windows out of the money report', () => {
     // 5-hour and weekly are pass/fail limits: a user budgets against the
@@ -404,7 +404,7 @@ console.log('plan-agnostic rendering')
     // Deliberate removal: how fast someone burns credit is not the card's
     // business, and "over pace" cannot be acted on by anyone who has work to do.
     const html = renderReady(GOAT, 2)
-    for (const banned of ['窗口已过', '超速', '富余', 'ccq-tick', 'ccq-pace', '/天', '天后耗尽', '每天']) {
+    for (const banned of ['over pace', 'burn rate', 'per day', 'projected', 'exhaust', 'days left']) {
       assert.equal(html.includes(banned), false, `card still mentions ${banned}`)
     }
   })
@@ -422,8 +422,8 @@ console.log('warnings')
       monthly: { ...GOAT.monthly, belowThreshold: true },
       plan: { ...GOAT.plan, cancelAtPeriodEnd: true },
     })
-    assert.match(html, /额度已低于阈值/)
-    assert.match(html, /订阅已取消/)
+    assert.match(html, /credit is below the configured threshold/)
+    assert.match(html, /Subscription canceled/)
     assert.match(html, /ccq-warn/)
   })
   check('a healthy active subscription raises no warning', () => {
@@ -443,15 +443,15 @@ console.log('values that move')
     // suite would flake once in a while.
     const soon = renderReady({ ...GOAT, fiveHour: { ...GOAT.fiveHour, resetAt: Date.now() + 59.5 * 60_000 } }, 1)
     const passed = renderReady({ ...GOAT, fiveHour: { ...GOAT.fiveHour, resetAt: Date.now() - 90_000 } }, 1)
-    assert.match(soon, /59m 后重置/)
+    assert.match(soon, /resets in 59m/)
     const firstRow = (html) => {
       const start = html.indexOf('ccq-win"')
       return html.slice(start, html.indexOf('ccq-win"', start + 1))
     }
-    // A reset instant that has passed prints no chip on its own row: `0m 后重置`
+    // A reset instant that has passed prints no chip on its own row: `resets in 0m`
     // beside unmoving numbers reads as a frozen card.
-    assert.doesNotMatch(firstRow(passed), /后重置/, 'the expired row keeps no chip')
-    assert.doesNotMatch(passed, /-\d+m 后重置/)
+    assert.doesNotMatch(firstRow(passed), /resets in/, 'the expired row keeps no chip')
+    assert.doesNotMatch(passed, /resets in -\d+m/)
   })
 
   check('the countdown floors rather than rounds, at the unit boundary', () => {
@@ -459,16 +459,16 @@ console.log('values that move')
       const html = renderReady({ ...GOAT, fiveHour: { ...GOAT.fiveHour, resetAt: Date.now() + minutes * 60_000 } }, 1)
       return [...html.matchAll(/class="ccq-reset">([^<]*)</g)].map((match) => match[1])[0]
     }
-    assert.equal(at(59.4), '59m 后重置', 'four seconds left of the minute is not a minute more')
-    assert.equal(at(60.5), '1h0m 后重置', 'and the hour rolls over exactly once')
-    assert.equal(at(61.5), '1h1m 后重置')
+    assert.equal(at(59.4), 'resets in 59m', 'four seconds left of the minute is not a minute more')
+    assert.equal(at(60.5), 'resets in 1h0m', 'and the hour rolls over exactly once')
+    assert.equal(at(61.5), 'resets in 1h1m')
   })
 
   check('an exceeded window says so, and its percentage is clamped', () => {
     const html = renderReady({ ...GOAT, fiveHour: { ...GOAT.fiveHour, exceeded: true, used: 15, cap: 14, percent: 107.1 } }, 1)
     const row = html.slice(html.indexOf('ccq-win"'), html.indexOf('ccq-win"', html.indexOf('ccq-win"') + 1))
-    assert.match(row, /已超限/)
-    assert.doesNotMatch(row, /后重置/, 'an exceeded window counts up, not down')
+    assert.match(row, /over limit/)
+    assert.doesNotMatch(row, /resets in/, 'an exceeded window counts up, not down')
     // Defence in depth: the host clamps, the card clamps, and neither prints
     // an impossible number.
     assert.match(row, /ccq-pct[^>]*>100%</)
@@ -504,7 +504,7 @@ console.log('values that move')
 
   check('an over-drawn allowance shows zero remaining, never a negative amount', () => {
     const html = renderReady({ ...GOAT, monthly: { ...GOAT.monthly, used: 71.1, remaining: -0.88, cap: 70.22, percent: 101.2 } }, 2)
-    assert.match(html, /剩余<\/span><span[^>]*>\$0\.00</)
+    assert.match(html, /Remaining<\/span><span[^>]*>\$0\.00</)
     assert.doesNotMatch(html, /\$-\d/)
     assert.match(html, /100%/, 'and the percentage is clamped, not printed as 101%')
   })
@@ -539,7 +539,7 @@ console.log('values that move')
     assert.deepEqual(percentagesIn(html), ['16%', '7%', '—'], 'the monthly row states no percentage')
     assert.doesNotMatch(html, /\$69\.50 \/ \$139\.10/, 'the mixed-instant sum is not printed')
     assert.doesNotMatch(html, /class="ccq-kv"/, 'and no money rows either')
-    assert.match(html, /本次读数跨了计费周期/)
+    assert.match(html, /straddles a billing boundary/)
     assert.doesNotMatch(html, /139/, 'nowhere does the implausible cap surface')
   })
 
@@ -548,7 +548,7 @@ console.log('values that move')
       ...GOAT,
       monthly: { used: 69.5, remaining: 69.6, cap: 139.1, percent: undefined, capSuspect: true },
     }, 1)
-    assert.deepEqual(labelsIn(html), ['5 小时', '每周', '月度'])
+    assert.deepEqual(labelsIn(html), ['5-hour', 'Weekly', 'Monthly'])
     assert.deepEqual(percentagesIn(html), ['16%', '7%', '—'])
   })
 
@@ -571,8 +571,8 @@ console.log('values that move')
       monthly: { used: 69.5, remaining: 0.6, cap: 70.1, percent: 99.1, capSuspect: false },
     }, 2)
     assert.match(html, /\$69\.50 \/ \$70\.10/)
-    assert.match(html, /剩余<\/span><span[^>]*>\$0\.60</)
-    assert.doesNotMatch(html, /本次读数跨了计费周期/)
+    assert.match(html, /Remaining<\/span><span[^>]*>\$0\.60</)
+    assert.doesNotMatch(html, /straddles a billing boundary/)
   })
 
   check('a host snapshot paints at once, dimmed, with its age on the tooltip', () => {
@@ -583,9 +583,9 @@ console.log('values that move')
     const html = renderReady({ ...GOAT, stale: true, staleAgeMs: 45_000 }, 1)
     assert.match(html, /ccq-stale/)
     assert.deepEqual(percentagesIn(html), ['16%', '7%', '98%'])
-    assert.doesNotMatch(html, /class="ccq-note"[^>]*>上次成功/, 'no stale note in the body')
+    assert.doesNotMatch(html, /class="ccq-note"[^>]*>last success/, 'no stale note in the body')
     // 45 seconds of age reads as `<1m`, and React escapes the angle bracket.
-    assert.match(html, /title="[^"]*上次成功：&lt;1m前/)
+    assert.match(html, /title="[^"]*last success &lt;1m ago/)
   })
 
   check('a live report is never dimmed', () => {
@@ -601,7 +601,7 @@ console.log('values that move')
 
   check('a plan that stops reporting a window simply drops the row', () => {
     const html = renderReady({ ...GOAT, weekly: undefined }, 1)
-    assert.deepEqual(labelsIn(html), ['5 小时', '月度'])
+    assert.deepEqual(labelsIn(html), ['5-hour', 'Monthly'])
   })
 }
 
@@ -612,18 +612,18 @@ console.log('what a user hits in practice')
     // blames their account. One muted line, and the endpoints named on the
     // card's tooltip.
     const html = renderReady({ ...GOAT, failures: ['/alpha/billing/credits: HTTP 500'] })
-    assert.match(html, /1 项数据这次没取到/)
+    assert.match(html, /1 reading\(s\) unavailable this time/)
     assert.match(html, /title="[^"]*credits: HTTP 500/)
   })
 
   await checkAsync('a healthy read says nothing about degradation', async () => {
-    assert.doesNotMatch(renderReady(GOAT), /没取到/)
+    assert.doesNotMatch(renderReady(GOAT), /unavailable this time/)
   })
 
   await checkAsync('the host’s diagnostic wall becomes one readable line', async () => {
     const { seen } = applyAgainst(stubbedReact([false, {
       phase: 'error',
-      message: '[NETWORK] 四个端点全部失败：\n  /alpha/whoami: fetch failed\n  /alpha/usage/summary: fetch failed',
+      message: '[NETWORK] all four endpoints failed:\n  /alpha/whoami: fetch failed\n  /alpha/usage/summary: fetch failed',
     }]))
     const error = renderToStaticMarkup(React.createElement(seen.component, {
       wide: true,
@@ -632,14 +632,14 @@ console.log('what a user hits in practice')
     // The visible line is the short one; the diagnostic text is only in the
     // tooltip, where it does not wreck the layout.
     const visible = /<div class="ccq-error"[^>]*>([^<]*)</.exec(error)?.[1]
-    assert.equal(visible, '连不上 Command Code')
+    assert.equal(visible, 'cannot reach Command Code')
     assert.match(error, /title="\[NETWORK\][^"]*usage\/summary/)
   })
 
   check('a known code and an unknown one both render something', () => {
     const { seen } = applyAgainst(stubbedReact([false, { phase: 'error', message: '[NOT_FOUND] nope' }]))
     const html = renderToStaticMarkup(React.createElement(seen.component, { wide: true, ...seen.options.inject() }))
-    assert.match(html, /当前套餐不含 API 权限/)
+    assert.match(html, /this plan has no API access/)
     const { seen: oddSeen } = applyAgainst(stubbedReact([false, { phase: 'error', message: 'something odd' }]))
     const odd = renderToStaticMarkup(React.createElement(oddSeen.component, { wide: true, ...oddSeen.options.inject() }))
     assert.match(odd, /something odd/, 'an unrecognised message is shown rather than swallowed')
@@ -710,14 +710,14 @@ console.log('states')
   }))
   check('a failure with nothing to fall back on surfaces the message and a retry hint', () => {
     assert.match(error, /boom/)
-    assert.match(error, /点击重试/)
+    assert.match(error, /click to retry/)
     assert.equal(labelsIn(error).length, 0)
   })
   check('a failure after a good report keeps the numbers and marks them stale', () => {
     const html = renderCard([1, { phase: 'error', message: 'network', report: GOAT, at: Date.now() - 120_000 }])
     assert.match(html, /ccq-stale/)
     assert.deepEqual(percentagesIn(html), ['16%', '7%', '98%'])
-    assert.match(html, /title="[^"]*上次成功：2m前/)
+    assert.match(html, /title="[^"]*last success 2m ago/)
   })
   check('collapsed sidebar badges the most constrained window, not the shortest', () => {
     const rail = renderCard([0, { phase: 'ready', report: GOAT }], { wide: false })

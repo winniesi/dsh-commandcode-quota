@@ -527,7 +527,7 @@ console.log('failures a user will actually hit')
     // does not exist.
     await assert.rejects(
       fetchQuotaReport({ apiKey: 'k', fetchImpl: notFound, apiBase: 'https://api.commandcode.ai' }),
-      (error) => error.code === 'NOT_FOUND' && /API 权限/.test(error.message),
+      (error) => error.code === 'NOT_FOUND' && /API access/.test(error.message),
     )
   })
 

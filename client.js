@@ -32,8 +32,8 @@
  *   pass/fail limits rather than as something to track in dollars. The age of a
  *   stale reading is not a line either: a dimmed card already says "not live",
  *   and the exact age stays on the tooltip.
- * - The card is Chinese-only in this fork, whatever language `dsh` runs in. Both
- *   dictionaries still register — the English table is what keeps this fork
+ * - The card is English-only in this fork, whatever language `dsh` runs in. Both
+ *   dictionaries still register — the Chinese table is what keeps this fork
  *   diffable against upstream — but nothing binds to the interface language.
  * - Nothing is deduced about *pace*. How fast a user burns credit is their
  *   business; a card that editorialises about "over pace" tells someone who
@@ -801,11 +801,11 @@ window.__ModuleLoader__.load({
     function apply(ctx) {
       ensureStyles()
       // The dictionaries still register — they are this plugin's public copy, and
-      // the English table is what keeps this fork diffable against upstream — but
+      // the Chinese table is what keeps this fork diffable against upstream — but
       // the card itself no longer binds to the interface language: in this fork
-      // every surface the card draws is Chinese, whatever `dsh` is set to.
+      // every surface the card draws is English, whatever `dsh` is set to.
       ctx.effect(() => ctx.locale.register(NS, DICT), 'cc-quota: dictionaries')
-      const t = (key) => DICT.zh[key] ?? key
+      const t = (key) => DICT.en[key] ?? key
       ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
         name: 'sidebar.footer.action',
         id: 'cc-quota',

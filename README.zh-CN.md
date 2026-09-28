@@ -27,7 +27,7 @@
 | **钱只在要紧的地方** | 月度额度给出已用与剩余金额；每一行的精确数字悬停可见 |
 | **先出现，再实时** | 重启后约 **2ms** 卡片就在屏幕上，约 1 秒后换成实时值 |
 | **该消失时消失** | 没配 Command Code 的机器上，卡片完全不渲染 |
-| **中文，一个字号** | 不管 DSH 界面语言是什么，卡片上的字都是中文；标题、标签、数字全部同一个字号 |
+| **全英文，一个字号** | 不管 DSH 界面语言是什么，插件输出的字都是英文；标题、标签、数字全部同一个字号 |
 
 卡片上的一切都来自**你自己账号的数据**——窗口数量、上限、百分比都是接口读出来的，不做假设。GOAT、Pro、Provider、Max、Teams 都适用；接口没上报滚动窗口的套餐，就不画那几行。（$1 的 **Go** 档是例外——它没有 API 权限，卡片在那里没有东西可画。）
 
@@ -148,11 +148,11 @@ New-Item -ItemType Junction -Path "$dsh\profiles\web\node_modules\dsh-commandcod
 Command Code · GOAT (active)
 5-hour 1.4% used · resets in 3h17m
 Weekly 12.8% used · resets in 6d7h
-Monthly 99.8% used · $70.11 / $70.23 · $0.11 left · resets in 7d22h
+Monthly 99.8% used · $70.11 / $70.22 · $0.11 left · resets in 7d22h
 18,087 requests · 100% success · in 3.49B / out 16.77M
 ```
 
-它读的正是卡片那份缓存报告，所以多敲一次命令不会多打上游接口——而且和卡片不同，它**从不**用磁盘快照作答：敲命令就是要当前数字。它的输出是英文，卡片是中文。
+它读的正是卡片那份缓存报告，所以多敲一次命令不会多打上游接口——而且和卡片不同，它**从不**用磁盘快照作答：敲命令就是要当前数字。它的输出是英文，卡片也是。
 
 ## 环境要求
 
@@ -259,25 +259,26 @@ node cli/cli.mjs --help
 ```
 
 ```text
-Command Code · GOAT（individual-goat） · Jovan1666
+Command Code · GOAT (individual-goat) · Jovan1666
 key: $DSH_HOME/.credentials.yaml → refs.COMMAND_CODE_GOAT_API_KEY
 
-5 小时     ---------------------------- 1.4%
-           今天 21:55 重置（2 小时 4 分后）
+5-hour     ---------------------------- 1.4%
+           resets today 21:55 (in 2h 4m)
 
-每周       ####------------------------ 12.8%
-           09-24 01:51 重置（6 天 6 小时后）
+Weekly     ####------------------------ 12.8%
+           resets 09-24 01:51 (in 6d 6h)
 
-月度额度   ############################ 99.8% · $70.11 / $70.23
-           剩余 $0.11 · 09-25 17:08 重置（7 天 21 小时后）
-本周期  18,087 请求 · 成功率 100% · in 3.49B / out 16.77M tokens
+Monthly    ############################ 99.8% · $70.11 / $70.22
+           left $0.11 · resets 09-25 17:08 (in 7d 21h)
+Period     18,087 requests · 100% success · in 3.49B / out 16.77M tokens
+updated today 19:51
 ```
 
 这里展示的是 `--ascii` 模式的输出，是刻意的：默认进度条用的是满行高的块字符，在很多等宽字体里会和紧挨着的那行文字糊在一起——本 README 之前就是这样，每周的进度条和上面 5 小时的重置时间粘成了一块。`#` 和 `-` 是普通字形，到哪儿都正常。另外没有分隔线、也没有右对齐列，每一行都自洽，不依赖字符宽度。
 
 参数：`--json` / `--watch [秒]` / `--ascii` / `--color` / `--no-color` / `--base <url>` / `--timeout <ms>` / `--key <key>`。
 
-命令行工具与卡片同一套取舍：金额只给月度，不做配速判断和消耗预测（那些数字仍在 `--json` 里）；它的**人类可读输出是中文**，`--json` 与语言无关，是给脚本用的接口。
+命令行工具与卡片同一套取舍：金额只给月度，不做配速判断和消耗预测（那些数字仍在 `--json` 里）；它的**人类可读输出是英文**，`--json` 与语言无关，是给脚本用的接口。
 
 ## 排查
 
@@ -311,9 +312,9 @@ node scripts/verify.mjs --quiet   # 每个套件只打一行汇总
 ```
 
 ```text
-ok    quota   (discovery contract)            17 checks
+ok    quota   (discovery contract)            21 checks
 ok    host    (route, cache, concurrency)     30 checks
-ok    client  (rendering, boundaries)         58 checks
+ok    client  (rendering, boundaries)         69 checks
 ok    dynamic (drift, resets, bad payloads)   33 checks
 ok    cli     (arguments, exit codes)          3 checks
 ok    audit   (credentials, host paths)

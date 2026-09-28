@@ -137,7 +137,7 @@ console.log('credential resolution follows the user config, not our naming')
     })
     const hit = resolveApiKey({ env: { MY_CUSTOM_KEY: 'user_from_env' }, dshHome: home, home: NO_HOME })
     assert.equal(hit.key, 'user_from_env')
-    assert.match(hit.source, /环境变量 MY_CUSTOM_KEY/)
+    assert.match(hit.source, /environment variable MY_CUSTOM_KEY/)
     rmSync(home, { recursive: true, force: true })
   })
   check('accepts a literal apiKey written into the provider row', () => {

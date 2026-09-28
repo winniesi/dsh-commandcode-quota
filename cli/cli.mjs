@@ -53,13 +53,13 @@ function parseArgs(argv) {
       options.watchSeconds = next === undefined || next.startsWith('--') ? 60 : Number(next);
       if (next !== undefined && !next.startsWith('--')) index += 1;
       if (!Number.isFinite(options.watchSeconds) || options.watchSeconds <= 0) {
-        throw new QuotaError('USAGE', '--watch 需要一个正数秒数，例如 --watch 60');
+        throw new QuotaError('USAGE', '--watch needs a positive number of seconds, e.g. --watch 60');
       }
     } else if (arg === '--base') {
       options.apiBase = requireValue(argv, (index += 1), '--base');
     } else if (arg === '--timeout') {
       const value = Number(requireValue(argv, (index += 1), '--timeout'));
-      if (!Number.isFinite(value) || value <= 0) throw new QuotaError('USAGE', '--timeout 需要一个正数毫秒值');
+      if (!Number.isFinite(value) || value <= 0) throw new QuotaError('USAGE', '--timeout needs a positive number of milliseconds');
       options.timeoutMs = value;
     } else if (arg === '--key') {
       options.apiKey = requireValue(argv, (index += 1), '--key');
@@ -67,7 +67,7 @@ function parseArgs(argv) {
       printUsage();
       process.exit(0);
     } else {
-      throw new QuotaError('USAGE', `未知参数 ${arg}（--help 看用法）`);
+      throw new QuotaError('USAGE', `unknown argument ${arg} (see --help)`);
     }
   }
   return options;
@@ -76,22 +76,22 @@ function parseArgs(argv) {
 /** 取一个需要值的参数，缺失即报错。 */
 function requireValue(argv, index, flag) {
   const value = argv[index];
-  if (value === undefined || value.startsWith('--')) throw new QuotaError('USAGE', `${flag} 缺少取值`);
+  if (value === undefined || value.startsWith('--')) throw new QuotaError('USAGE', `${flag} needs a value`);
   return value;
 }
 
 function printUsage() {
   process.stdout.write(
     [
-      '用法: node cli.mjs [选项]',
+      'Usage: node cli.mjs [options]',
       '',
-      '  --json           输出归一化 JSON，不渲染',
-      '  --watch [秒]     持续刷新，默认每 60 秒',
-      '  --ascii          进度条只用 ASCII 字符',
-      '  --color / --no-color  强制开关 ANSI 颜色',
-      '  --base <url>     API 基地址，默认 ' + DEFAULT_API_BASE,
-      '  --timeout <ms>   单端点超时，默认 ' + DEFAULT_TIMEOUT_MS,
-      '  --key <key>      显式 API key（优先级最高，会留在 shell 历史里）',
+      '  --json           print the normalized JSON instead of rendering',
+      '  --watch [sec]    keep refreshing, every 60 seconds by default',
+      '  --ascii          draw the bars with ASCII characters only',
+      '  --color / --no-color  force ANSI colour on or off',
+      '  --base <url>     API base URL, default ' + DEFAULT_API_BASE,
+      '  --timeout <ms>   per-endpoint timeout, default ' + DEFAULT_TIMEOUT_MS,
+      '  --key <key>      explicit API key (wins over everything, and stays in your shell history)',
       '',
     ].join('\n'),
   );
@@ -118,9 +118,9 @@ function when(timestamp) {
   const now = new Date();
   const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
   const time = `${String(target.getHours()).padStart(2, '0')}:${String(target.getMinutes()).padStart(2, '0')}`;
-  if (sameDay(target, now)) return `今天 ${time}`;
+  if (sameDay(target, now)) return `today ${time}`;
   const tomorrow = new Date(now.getTime() + 86_400_000);
-  if (sameDay(target, tomorrow)) return `明天 ${time}`;
+  if (sameDay(target, tomorrow)) return `tomorrow ${time}`;
   return `${String(target.getMonth() + 1).padStart(2, '0')}-${String(target.getDate()).padStart(2, '0')} ${time}`;
 }
 
@@ -128,14 +128,14 @@ function when(timestamp) {
 function countdown(timestamp) {
   if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return undefined;
   const deltaMs = timestamp - Date.now();
-  if (deltaMs <= 0) return '已到期';
+  if (deltaMs <= 0) return 'due now';
   const minutes = Math.floor(deltaMs / 60_000);
   const days = Math.floor(minutes / 1440);
   const hours = Math.floor((minutes % 1440) / 60);
   const restMinutes = minutes % 60;
-  if (days > 0) return `${days} 天 ${hours} 小时后`;
-  if (hours > 0) return `${hours} 小时 ${restMinutes} 分后`;
-  return `${restMinutes} 分后`;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${restMinutes}m`;
+  return `${restMinutes}m`;
 }
 
 /** 终端显示宽度：CJK 与全角字符占两列，`padEnd` 按字符数算会错位。 */
@@ -179,11 +179,11 @@ function padLabel(text, width) {
  */
 function windowLine(label, window, options, withMoney = false) {
   const heading = padLabel(label, LABEL_WIDTH);
-  if (window === undefined) return [`${heading} 该账号未上报此窗口`];
+  if (window === undefined) return [`${heading} this account reports no such window`];
   // 跨计费周期的读数：两个端点描述的不是同一个时刻，拒绝给出任何数字。
   if (withMoney && window.capSuspect === true) {
     const reset = countdown(window.resetAt);
-    return [`${heading} ${' '.repeat(BAR_WIDTH + 2)}本次读数跨了计费周期${reset === undefined ? '' : `，${when(window.resetAt)} 重置（${reset}）`}`];
+    return [`${heading} ${' '.repeat(BAR_WIDTH + 2)}reading straddles a billing boundary${reset === undefined ? '' : ` · resets ${when(window.resetAt)} (in ${reset})`}`];
   }
   const percent = window.percent;
   const span = withMoney ? ` · ${money(window.used)} / ${money(window.cap)}` : '';
@@ -192,9 +192,9 @@ function windowLine(label, window, options, withMoney = false) {
   const detail = [
     // Clamped at zero like the card: an overdrawn allowance says "nothing
     // left", not a negative amount that looks like a rendering bug.
-    withMoney ? `剩余 ${money(Math.max(0, window.cap - window.used))}` : undefined,
-    reset === undefined ? undefined : `${when(window.resetAt)} 重置（${reset}）`,
-    window.exceeded ? '已超限' : undefined,
+    withMoney ? `left ${money(Math.max(0, window.cap - window.used))}` : undefined,
+    reset === undefined ? undefined : `resets ${when(window.resetAt)} (in ${reset})`,
+    window.exceeded ? 'over limit' : undefined,
   ]
     .filter((part) => part !== undefined)
     .join(' · ');
@@ -207,7 +207,7 @@ function windowLine(label, window, options, withMoney = false) {
 /** 渲染完整报告。 */
 function render(report, options) {
   const lines = [];
-  const title = report.plan === undefined ? 'Command Code' : `Command Code · ${report.plan.name}（${report.plan.planId}）`;
+  const title = report.plan === undefined ? 'Command Code' : `Command Code · ${report.plan.name} (${report.plan.planId})`;
   const who = report.account?.userName ?? report.account?.name ?? '';
   // No right-aligned columns and no rule lines: both depend on character-cell
   // widths, which differ between a terminal and a browser's code font — the
@@ -223,9 +223,9 @@ function render(report, options) {
   // The blank line each window ends with is dropped from the last group so the
   // summary follows the monthly block instead of floating away from it.
   const groups = [
-    windowLine('5 小时', report.fiveHour, options),
-    windowLine('每周', report.weekly, options),
-    windowLine('月度额度', { ...report.monthly, resetAt: report.plan === undefined ? undefined : Date.parse(report.plan.currentPeriodEnd ?? '') }, options, true),
+    windowLine('5-hour', report.fiveHour, options),
+    windowLine('Weekly', report.weekly, options),
+    windowLine('Monthly', { ...report.monthly, resetAt: report.plan === undefined ? undefined : Date.parse(report.plan.currentPeriodEnd ?? '') }, options, true),
   ];
   groups.forEach((group, index) => {
     const last = index === groups.length - 1;
@@ -234,15 +234,15 @@ function render(report, options) {
 
   const totals = report.totals;
   lines.push(
-    `本周期  ${totals.requests === undefined ? '—' : totals.requests.toLocaleString('en-US')} 请求 · 成功率 ${totals.successRate === undefined ? '—' : `${totals.successRate}%`} · in ${tokens(totals.tokensIn)} / out ${tokens(totals.tokensOut)} tokens`,
+    `Period     ${totals.requests === undefined ? '—' : totals.requests.toLocaleString('en-US')} requests · ${totals.successRate === undefined ? '—' : `${totals.successRate}%`} success · in ${tokens(totals.tokensIn)} / out ${tokens(totals.tokensOut)} tokens`,
   );
   if (report.monthly.freeCredits || report.monthly.purchasedCredits) {
-    lines.push(`额外额度  赠送 ${money(report.monthly.freeCredits)} · 已购 ${money(report.monthly.purchasedCredits)}（不受窗口限制）`);
+    lines.push(`Extra      free ${money(report.monthly.freeCredits)} · purchased ${money(report.monthly.purchasedCredits)} (not window-limited)`);
   }
   if (report.failures.length > 0) {
-    lines.push(`降级     以下端点失败：${report.failures.join('; ')}`);
+    lines.push(`Degraded   these endpoints failed: ${report.failures.join('; ')}`);
   }
-  lines.push(`${options.color ? DIM : ''}更新于 ${new Date(report.fetchedAt).toLocaleString('zh-CN')}${options.color ? RESET : ''}`);
+  lines.push(`${options.color ? DIM : ''}updated ${when(Date.parse(report.fetchedAt)) ?? report.fetchedAt}${options.color ? RESET : ''}`);
   return lines.join('\n');
 }
 

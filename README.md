@@ -27,7 +27,7 @@ No browser tab, no login, no guessing how much of the plan is left.
 | **Money where it matters** | Used and remaining for the monthly allowance; exact figures for every row on hover |
 | **Instant, then live** | The card is on screen about 2 ms after a restart, and live about a second later |
 | **Quiet when it should be** | No Command Code account? The card does not render at all |
-| **Chinese, one size** | Every word on the card is Chinese whatever language DSH runs in, and every line — title, label, number — is set at the same size |
+| **English, one size** | Every word the plugin prints is English whatever language DSH runs in, and every line — title, label, number — is set at the same size |
 
 Everything is read from **your own account's data** — window count, caps and percentages come from the API, never assumed. GOAT, Pro, Provider, Max and Teams work; a plan that reports no rolling windows simply renders no rows. (The $1 **Go** tier is the exception — it has no API access, so the card has nothing to render there.)
 
@@ -147,11 +147,11 @@ Type `/quota` in a conversation to print the same report as text:
 Command Code · GOAT (active)
 5-hour 1.4% used · resets in 3h17m
 Weekly 12.8% used · resets in 6d7h
-Monthly 99.8% used · $70.11 / $70.23 · $0.11 left · resets in 7d22h
+Monthly 99.8% used · $70.11 / $70.22 · $0.11 left · resets in 7d22h
 18,087 requests · 100% success · in 3.49B / out 16.77M
 ```
 
-It reads the same cached report the card does, so a slash invocation costs no extra upstream requests — and unlike the card, it never answers from a stale snapshot: typing a command means asking for the current numbers. Its text is English; the card is Chinese.
+It reads the same cached report the card does, so a slash invocation costs no extra upstream requests — and unlike the card, it never answers from a stale snapshot: typing a command means asking for the current numbers. Its text is English, like every other surface of the plugin.
 
 ## Requirements
 
@@ -258,25 +258,26 @@ node cli/cli.mjs --help
 ```
 
 ```text
-Command Code · GOAT（individual-goat） · Jovan1666
+Command Code · GOAT (individual-goat) · Jovan1666
 key: $DSH_HOME/.credentials.yaml → refs.COMMAND_CODE_GOAT_API_KEY
 
-5 小时     ---------------------------- 1.4%
-           今天 21:55 重置（2 小时 4 分后）
+5-hour     ---------------------------- 1.4%
+           resets today 21:55 (in 2h 4m)
 
-每周       ####------------------------ 12.8%
-           09-24 01:51 重置（6 天 6 小时后）
+Weekly     ####------------------------ 12.8%
+           resets 09-24 01:51 (in 6d 6h)
 
-月度额度   ############################ 99.8% · $70.11 / $70.23
-           剩余 $0.11 · 09-25 17:08 重置（7 天 21 小时后）
-本周期  18,087 请求 · 成功率 100% · in 3.49B / out 16.77M tokens
+Monthly    ############################ 99.8% · $70.11 / $70.22
+           left $0.11 · resets 09-25 17:08 (in 7d 21h)
+Period     18,087 requests · 100% success · in 3.49B / out 16.77M tokens
+updated today 19:51
 ```
 
 Shown with `--ascii`, and deliberately so: the default bars are drawn with full-height block glyphs, which sit flush against the text line beside them in many code fonts — in this very README the weekly bar merged with the 5-hour countdown above it. `#` and `-` are ordinary glyphs and travel everywhere. There are also no rule lines and no right-aligned columns, so every line stands on its own instead of depending on character-cell widths.
 
 Flags: `--json`, `--watch [seconds]`, `--ascii`, `--color` / `--no-color`, `--base <url>`, `--timeout <ms>`, `--key <key>`.
 
-The CLI's human-readable output is Chinese; `--json` is language-neutral and is the interface to script against. It follows the card's presentation rules — money on the monthly allowance only, no pace verdict and no burn-rate forecast (those remain in the JSON).
+The CLI's human-readable output is English; `--json` is language-neutral and is the interface to script against. It follows the card's presentation rules — money on the monthly allowance only, no pace verdict and no burn-rate forecast (those remain in the JSON).
 
 ## Troubleshooting
 
@@ -310,9 +311,9 @@ node scripts/verify.mjs --quiet   # one summary line per suite
 ```
 
 ```text
-ok    quota   (discovery contract)            17 checks
+ok    quota   (discovery contract)            21 checks
 ok    host    (route, cache, concurrency)     30 checks
-ok    client  (rendering, boundaries)         58 checks
+ok    client  (rendering, boundaries)         69 checks
 ok    dynamic (drift, resets, bad payloads)   33 checks
 ok    cli     (arguments, exit codes)          3 checks
 ok    audit   (credentials, host paths)

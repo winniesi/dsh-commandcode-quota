@@ -376,7 +376,7 @@ export function resolveApiKey(options = {}) {
   ];
 
   if (typeof options.apiKey === 'string' && options.apiKey !== '') {
-    return { key: options.apiKey, source: '--key 参数' };
+    return { key: options.apiKey, source: '--key argument' };
   }
 
   /**
@@ -391,10 +391,10 @@ export function resolveApiKey(options = {}) {
     // provider's row and send *that* key to Command Code, or hang the host, so
     // it is refused rather than quietly matching nothing.
     if (!CREDENTIAL_REF_PATTERN.test(ref)) {
-      throw new QuotaError('MISSING_CREDENTIAL', `apiKeyEnv 必须是一个环境变量名，而不是 ${JSON.stringify(ref)}`);
+      throw new QuotaError('MISSING_CREDENTIAL', `apiKeyEnv must be an environment variable name, not ${JSON.stringify(ref)}`);
     }
     const fromEnv = env[ref];
-    if (typeof fromEnv === 'string' && fromEnv !== '') return { key: fromEnv, source: `环境变量 ${ref}` };
+    if (typeof fromEnv === 'string' && fromEnv !== '') return { key: fromEnv, source: `environment variable ${ref}` };
     for (const file of credentialFiles) {
       const value = readCredentialRef(file, ref);
       if (value !== undefined) return { key: value, source: `${file} → refs.${ref}` };
@@ -425,12 +425,12 @@ export function resolveApiKey(options = {}) {
   // 3. 环境变量：固定名字，再退到"名字像 Command Code 的任意变量"。
   for (const name of names) {
     const value = env[name];
-    if (typeof value === 'string' && value !== '') return { key: value, source: `环境变量 ${name}` };
+    if (typeof value === 'string' && value !== '') return { key: value, source: `environment variable ${name}` };
   }
   for (const name of Object.keys(env)) {
     if (!KEY_ENV_PATTERN.test(name)) continue;
     const value = env[name];
-    if (typeof value === 'string' && value !== '') return { key: value, source: `环境变量 ${name}` };
+    if (typeof value === 'string' && value !== '') return { key: value, source: `environment variable ${name}` };
   }
 
   // 4. 凭据文件里的固定名字。
@@ -446,7 +446,7 @@ export function resolveApiKey(options = {}) {
 
   throw new QuotaError(
     'MISSING_CREDENTIAL',
-    '未找到 Command Code API key。把 Command Code 配成 DSH 的 provider（设置 → Models）即可自动识别，或设置 COMMANDCODE_API_KEY 环境变量。',
+    'No Command Code API key found. Configure Command Code as a DSH provider (Settings → Models) and it is picked up automatically, or set the COMMANDCODE_API_KEY environment variable.',
     // Nothing on this machine points at Command Code: the plugin is simply not
     // applicable here, and the caller hides the card instead of showing an
     // error. A discovered route with an unresolvable key stays `configured`.
@@ -475,14 +475,14 @@ async function getJson(url, headers, timeoutMs, fetchImpl) {
   try {
     response = await fetchImpl(url, { headers, signal: AbortSignal.timeout(timeoutMs) });
   } catch (error) {
-    throw new QuotaError('NETWORK', `${url} 请求失败：${error instanceof Error ? error.message : String(error)}`);
+    throw new QuotaError('NETWORK', `${url} request failed: ${error instanceof Error ? error.message : String(error)}`);
   }
   if (!response.ok) return { status: response.status };
   try {
     return { status: response.status, record: await response.json() };
   } catch {
     // 拿到了 2xx 但不是 JSON：按 BAD_RESPONSE 记账，不冒充成功。
-    throw new QuotaError('BAD_RESPONSE', `${url} 返回了非 JSON 响应`, { status: response.status });
+    throw new QuotaError('BAD_RESPONSE', `${url} returned a non-JSON response`, { status: response.status });
   }
 }
 
@@ -610,7 +610,7 @@ export async function fetchQuotaReport(options = {}) {
     const codes = failedStatuses;
     const allObserved = (test) => codes.length > 0 && codes.every(test);
     if (allObserved((status) => status === 401 || status === 403)) {
-      throw new QuotaError('AUTH', 'API key 被拒绝（401）：key 是否已失效或被重置？', { failures });
+      throw new QuotaError('AUTH', 'the API key was rejected (401): has it expired or been reset?', { failures });
     }
     // A plan without API access answers 404 on all four endpoints. Reporting
     // that as a network failure sends the user hunting for a connectivity
@@ -618,14 +618,14 @@ export async function fetchQuotaReport(options = {}) {
     if (allObserved((status) => status === 404)) {
       throw new QuotaError(
         'NOT_FOUND',
-        '额度接口全部返回 404：当前套餐可能不含 API 权限（Command Code 除 $1 的 Go 档外都含），也可能是 provider 路由指向的不是 Command Code 的接口。',
+        'every allowance endpoint returned 404: this plan may not include API access (every Command Code tier except the $1 Go tier does), or the provider route does not point at the Command Code API.',
         { failures },
       );
     }
     if (allObserved((status) => status >= 500)) {
-      throw new QuotaError('SERVICE', 'Command Code 服务端异常（5xx），稍后重试。', { failures });
+      throw new QuotaError('SERVICE', 'Command Code returned a server error (5xx); retry shortly.', { failures });
     }
-    throw new QuotaError('NETWORK', `四个端点全部失败：\n  ${failures.join('\n  ')}`, { failures });
+    throw new QuotaError('NETWORK', `all four endpoints failed:\n  ${failures.join('\n  ')}`, { failures });
   }
 
   const user = isRecord(whoami) && isRecord(whoami.user) ? whoami.user : undefined;
