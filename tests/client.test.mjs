@@ -156,7 +156,7 @@ async function pollDelayFor(report) {
 }
 
 /** Register against a fake client context and hand back what the plugin contributed. */
-function applyAgainst(reactImpl, report = GOAT) {
+function applyAgainst(reactImpl, report = GOAT, localeName = 'zh') {
   const { exports, styles, timers } = loadBundle(reactImpl)
   assert.equal(typeof exports.apply, 'function', 'exports apply')
   assert.deepEqual(exports.inject, ['slots', 'connection', 'locale'], 'declares its services')
@@ -169,8 +169,9 @@ function applyAgainst(reactImpl, report = GOAT) {
         seen.dictionaries = dictionary
         return () => {}
       },
-      // Reads at call time, like the real binding, and serves the shipped zh copy.
-      bind: () => (key) => seen.dictionaries.zh?.[key] ?? key,
+      // Reads at call time, like the real binding. `localeName` lets a test
+      // pretend the interface language is not Chinese.
+      bind: () => (key) => seen.dictionaries[localeName]?.[key] ?? key,
     },
     slots: {
       inject: (key, callback) => {
@@ -229,6 +230,14 @@ console.log('bundle contract')
     assert.deepEqual(seen.rpcCall.slice(0, 3), ['/api', 'cc-quota/report', {}])
     assert.equal(seen.rpcCall[3], 'signal')
   })
+  check('the whole card uses one type size', () => {
+    // Title, window labels, percentage, notes: one size. A 14px headline over
+    // 12px notes made a small card read as two stacked documents.
+    const sizes = [...styles[0].textContent.matchAll(/font-size:\s*([^;}]+)/g)].map((match) => match[1].trim())
+    assert.ok(sizes.length > 0, 'the stylesheet sets a size at all')
+    assert.deepEqual([...new Set(sizes)], ['13px'], `type sizes were ${[...new Set(sizes)].join(', ')}`)
+    assert.match(styles[0].textContent, /\.ccq-card\{[^}]*font-size:13px/)
+  })
   check('injects its stylesheet exactly once, using harness design tokens', () => {
     assert.equal(styles.length, 1)
     assert.equal(styles[0].id, 'dsh-commandcode-quota-style')
@@ -276,6 +285,20 @@ console.log('window order and percentage-first values')
     const tail = renderReady({ ...GOAT, monthly: { used: 70.1122, remaining: 0.113, cap: 70.2252, percent: 99.8391 } })
     assert.match(tail, /class="ccq-pct"[^>]*>100%</)
     assert.match(tail, /99\.8%/) // precision survives on the tooltip
+  })
+}
+
+console.log('Chinese copy, whatever dsh is set to')
+{
+  check('an English interface still gets a Chinese card', () => {
+    const { seen } = applyAgainst(stubbedReact([0, { phase: 'ready', report: GOAT }]), GOAT, 'en')
+    const html = renderToStaticMarkup(React.createElement(seen.component, {
+      wide: true,
+      ...seen.options.inject(),
+    }))
+    assert.match(html, /月度/)
+    assert.match(html, /后重置/)
+    assert.doesNotMatch(html, /Monthly|resets in|left/, 'no English reaches the card')
   })
 }
 
@@ -552,14 +575,17 @@ console.log('values that move')
     assert.doesNotMatch(html, /本次读数跨了计费周期/)
   })
 
-  check('a host snapshot paints at once, dimmed, with its age', () => {
+  check('a host snapshot paints at once, dimmed, with its age on the tooltip', () => {
     // What the card shows in the first moments after a dsh restart: the host
     // answers with its last good read while a fresh one is on its way. The
-    // numbers are real but no longer current, so they say so.
+    // numbers are real but no longer current, so they say so — by dimming, and
+    // by one tooltip, never by a line of their own.
     const html = renderReady({ ...GOAT, stale: true, staleAgeMs: 45_000 }, 1)
     assert.match(html, /ccq-stale/)
     assert.deepEqual(percentagesIn(html), ['16%', '7%', '98%'])
-    assert.match(html, /上次成功：45m?前|<1m前|0m前|\d+m前/)
+    assert.doesNotMatch(html, /class="ccq-note"[^>]*>上次成功/, 'no stale note in the body')
+    // 45 seconds of age reads as `<1m`, and React escapes the angle bracket.
+    assert.match(html, /title="[^"]*上次成功：&lt;1m前/)
   })
 
   check('a live report is never dimmed', () => {
@@ -691,7 +717,7 @@ console.log('states')
     const html = renderCard([1, { phase: 'error', message: 'network', report: GOAT, at: Date.now() - 120_000 }])
     assert.match(html, /ccq-stale/)
     assert.deepEqual(percentagesIn(html), ['16%', '7%', '98%'])
-    assert.match(html, /上次成功：2m前/)
+    assert.match(html, /title="[^"]*上次成功：2m前/)
   })
   check('collapsed sidebar badges the most constrained window, not the shortest', () => {
     const rail = renderCard([0, { phase: 'ready', report: GOAT }], { wide: false })

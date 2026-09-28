@@ -39,7 +39,7 @@ and the cordis loader id, not a document version, so it does not move.
   file parses, every `.js`/`.mjs` passes `node --check`, no credential or
   machine-specific path is committed, the package identity is consistent across
   `package.json`, `package-lock.json`, `cordis.patch.yml` and `screenshots.json`,
-  and then the 154 offline checks in `scripts/verify.mjs`.
+  and then the 156 offline checks in `scripts/verify.mjs`.
 - **`SECURITY.md`** — supported versions, private reporting, the exact list of what
   the plugin reads, writes and sends, and the credential-resolution order.
 - **`package-lock.json`** — the React dependency tree, so CI installs what the
@@ -47,6 +47,21 @@ and the cordis loader id, not a document version, so it does not move.
 
 ### Changed
 
+- **The card is Chinese-only.** Every word it draws is Chinese whatever language
+  `dsh` runs in: the copy follows the interface language before, so an
+  English-language harness got an English card. Both dictionaries still register
+  — the English table is what keeps this fork diffable against upstream — but the
+  card no longer binds to the locale. The host-side text is untouched: the `ccq`
+  CLI already printed Chinese, and `/quota` still prints English.
+- **One type size across the whole card.** The title, the window labels, the
+  percentage and the notes are all 13 px now; weight still marks the headline. A
+  14 px headline over 12 px notes made a card this small read as two stacked
+  documents. The stylesheet sets exactly one `font-size` value (plus the rail
+  badge, which is a separate 36 px surface), and the client suite asserts it.
+- **A stale reading no longer prints its age underneath.** The card still dims
+  when the host answers with its last snapshot or a refresh fails, and the age
+  moved to the card's tooltip, where it costs no height: the sidebar has no room
+  to say "not live" twice.
 - **The card unfolds in three steps instead of two.** It used to render all three
   credit windows the moment it appeared, with the money and totals one click
   behind them. It now rests on a single row — the monthly allowance, the figure a

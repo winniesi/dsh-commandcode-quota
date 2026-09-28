@@ -27,7 +27,7 @@ No browser tab, no login, no guessing how much of the plan is left.
 | **Money where it matters** | Used and remaining for the monthly allowance; exact figures for every row on hover |
 | **Instant, then live** | The card is on screen about 2 ms after a restart, and live about a second later |
 | **Quiet when it should be** | No Command Code account? The card does not render at all |
-| **Bilingual** | The card follows your DSH interface language (中文 / English) |
+| **Chinese, one size** | Every word on the card is Chinese whatever language DSH runs in, and every line — title, label, number — is set at the same size |
 
 Everything is read from **your own account's data** — window count, caps and percentages come from the API, never assumed. GOAT, Pro, Provider, Max and Teams work; a plan that reports no rolling windows simply renders no rows. (The $1 **Go** tier is the exception — it has no API access, so the card has nothing to render there.)
 
@@ -47,7 +47,7 @@ dsh --version          # needs 0.1.5-rc.1 or newer
 npm i -g @deepseek-ai/dsh@latest
 ```
 
-Note that the plugin's 154 offline checks also **pass** on an older dsh — they never start dsh. So "the checks are green" does not mean it will work once installed.
+Note that the plugin's 156 offline checks also **pass** on an older dsh — they never start dsh. So "the checks are green" does not mean it will work once installed.
 
 ## Install
 
@@ -109,7 +109,7 @@ The card used to wait out a full upstream round trip before drawing anything, an
 Two things make the difference:
 
 1. **All four endpoints are requested at once.** `whoami` used to be awaited on its own — about 590 ms of pure waiting, to learn an org id that personal accounts never report.
-2. **The last good report is kept on disk.** A cold start answers with it immediately — dimmed, and labelled with how old it is — while a live read runs behind it. The card re-asks 3 seconds later instead of waiting out the usual minute, so the numbers are live by the time you have read them.
+2. **The last good report is kept on disk.** A cold start answers with it immediately — dimmed, with how old it is on the tooltip — while a live read runs behind it. The card re-asks 3 seconds later instead of waiting out the usual minute, so the numbers are live by the time you have read them.
 
 ## How to read the card
 
@@ -133,6 +133,7 @@ The card rests on one row — the monthly allowance — because that is the figu
 
 The sidebar is about 200 px of content width, and a laptop screen makes small type smaller still. So the card answers one question well — *how deep am I?* — instead of laying out everything the API returns:
 
+- **One type size, and no status line when the numbers are old.** The title, the window labels, the percentage and the notes are all set at 13 px: a 14 px headline over 12 px notes made one small card read as two stacked documents. A stale reading dims the card instead of printing "last success 3m ago" underneath it — the dimming already says the numbers are not live, and the exact age is on the tooltip.
 - **Folded until asked.** The seat is permanent and shared with Settings, so the resting card spends its single row on the monthly allowance instead of three rows nobody asked for. The rolling windows, the money and the totals are each one click away, and warnings — a canceled subscription, a below-threshold balance — stay on screen at every stage rather than waiting behind one.
 - **Money only for the monthly allowance.** The 5-hour and weekly windows are pass/fail gates, not budgets; their dollar rows told a user nothing they could act on. Hover still shows exact figures.
 - **No pace verdict, no burn-rate forecast.** "Over pace" cannot be acted on by someone who has work to do, and a projected exhaustion date assumes a constant burn rate that credit usage never has. The host still exposes `projection` in its JSON for scripts.
@@ -150,7 +151,7 @@ Monthly 99.8% used · $70.11 / $70.23 · $0.11 left · resets in 7d22h
 18,087 requests · 100% success · in 3.49B / out 16.77M
 ```
 
-It reads the same cached report the card does, so a slash invocation costs no extra upstream requests — and unlike the card, it never answers from a stale snapshot: typing a command means asking for the current numbers. Its text is English; the card is the bilingual surface.
+It reads the same cached report the card does, so a slash invocation costs no extra upstream requests — and unlike the card, it never answers from a stale snapshot: typing a command means asking for the current numbers. Its text is English; the card is Chinese.
 
 ## Requirements
 
@@ -285,7 +286,7 @@ The CLI's human-readable output is Chinese; `--json` is language-neutral and is 
 | The card shows an error | The card says what it can ("cannot reach Command Code", "the API key was rejected"); hover it for the full diagnostic text. |
 | `/plugins/dsh-commandcode-quota/client.js` returns 404 | The client bundle was not composed. Check that `package.json` declares `dsh.client.platform === "web"` and `exports["./client"]`. |
 | A change to `client.js` did nothing | Reload the page — the bundle is read from disk per request. Changes to `index.js` or `quota.mjs` need a `dsh web` restart (Node caches modules). |
-| Numbers are dimmed | The host answered with its last snapshot, or a refresh failed. The age is printed underneath, and it corrects itself on the next refresh. |
+| Numbers are dimmed | The host answered with its last snapshot, or a refresh failed. Hover the card for the age of the reading; it corrects itself on the next refresh. |
 | Everything reads `—` | The account reported no windows for that plan, or a read is still in flight. |
 | The panel is empty after removing Command Code | Intended — the plugin does not show a snapshot for a provider you no longer have. |
 
@@ -302,7 +303,7 @@ The CLI's human-readable output is Chinese; `--json` is language-neutral and is 
 # 1. React is needed only by the component test and the preview page
 mkdir .devdeps && cd .devdeps && npm init -y && npm install react@18 react-dom@18 && cd ..
 
-# 2. Everything at once — 154 checks, one verdict, no network, no real credentials
+# 2. Everything at once — 156 checks, one verdict, no network, no real credentials
 node scripts/check.mjs            # release check: static + secret scan + every suite below
 node scripts/verify.mjs           # add --live to also hit a real account
 node scripts/verify.mjs --quiet   # one summary line per suite

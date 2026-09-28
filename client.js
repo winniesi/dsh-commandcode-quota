@@ -24,10 +24,17 @@
  *   without a mental conversion; the exact one-decimal value and the dollar
  *   amounts stay one hover away.
  * - Space is deliberately scarce: the sidebar is narrow and laptop screens make
- *   small type smaller still. Only the monthly allowance is shown in money —
- *   it is the one total a user actually budgets against — while the rolling
- *   windows stay percentage-only, because the API reports them as pass/fail
- *   limits rather than as something to track in dollars.
+ *   small type smaller still. One type size covers the whole card — title,
+ *   labels, percentage and notes — because a second, smaller size made one small
+ *   card read as two stacked documents. Only the monthly allowance is shown in
+ *   money — it is the one total a user actually budgets against — while the
+ *   rolling windows stay percentage-only, because the API reports them as
+ *   pass/fail limits rather than as something to track in dollars. The age of a
+ *   stale reading is not a line either: a dimmed card already says "not live",
+ *   and the exact age stays on the tooltip.
+ * - The card is Chinese-only in this fork, whatever language `dsh` runs in. Both
+ *   dictionaries still register — the English table is what keeps this fork
+ *   diffable against upstream — but nothing binds to the interface language.
  * - Nothing is deduced about *pace*. How fast a user burns credit is their
  *   business; a card that editorialises about "over pace" tells someone who
  *   simply has work to do something they cannot act on.
@@ -179,11 +186,20 @@ window.__ModuleLoader__.load({
       },
     }
 
+    /*
+     * One type size for the whole card: the title, the window labels, the
+     * percentage and the notes all inherit these two values, so nothing inside
+     * the card declares its own. Two sizes — a 14px headline over 12px notes —
+     * made one small card look like two documents stacked, and the sidebar is
+     * too narrow to carry that hierarchy. Weight still marks the headline.
+     * `font-size` therefore appears exactly twice below: once here and once on
+     * the rail badge, which is a separate 36px surface.
+     */
     const CSS = `
 .ccq-card{box-sizing:border-box;width:100%;margin:0 0 6px;padding:11px 13px 12px;border-radius:12px;
   border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-button-elevated-fill);
   color:var(--dsw-alias-label-primary);font-family:inherit;text-align:left;
-  cursor:pointer}
+  font-size:13px;line-height:18px;cursor:pointer}
 .ccq-card:hover{background:var(--dsw-alias-button-floating-hover)}
 .ccq-card.ccq-stale{opacity:.62}
 /* Selection stays off the toggle target only: a drag across the header should not
@@ -192,43 +208,42 @@ window.__ModuleLoader__.load({
   -webkit-user-select:none;user-select:none;
   border-bottom:1px solid var(--dsw-alias-border-l1)}
 .ccq-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font-size:13px;font-weight:600;line-height:18px}
+  font-weight:600}
 .ccq-plan{flex:none;max-width:104px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  padding:1px 6px;border-radius:6px;font-size:12px;line-height:16px;font-weight:500;
+  padding:1px 6px;border-radius:6px;font-weight:500;
   background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-tertiary)}
-.ccq-chevron{flex:none;color:var(--dsw-alias-label-caption);font-size:12px;line-height:18px;
+.ccq-chevron{flex:none;color:var(--dsw-alias-label-caption);
   transition:transform 150ms ease}
 .ccq-chevron.ccq-open{transform:rotate(180deg)}
 .ccq-win+.ccq-win{margin-top:10px}
 .ccq-winhead{display:flex;align-items:baseline;gap:8px}
-.ccq-winlabel{flex:none;font-size:13px;line-height:18px;color:var(--dsw-alias-label-secondary)}
+.ccq-winlabel{flex:none;color:var(--dsw-alias-label-secondary)}
 .ccq-spacer{flex:1;min-width:0}
-.ccq-pct{flex:none;font-size:14px;font-weight:600;line-height:18px;font-variant-numeric:tabular-nums}
-.ccq-reset{flex:none;padding:2px 7px;border-radius:6px;font-size:12px;line-height:16px;
+.ccq-pct{flex:none;font-weight:600;font-variant-numeric:tabular-nums}
+.ccq-reset{flex:none;padding:2px 7px;border-radius:6px;
   background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-tertiary);
   font-variant-numeric:tabular-nums;white-space:nowrap}
 .ccq-track{position:relative;height:6px;margin-top:7px;border-radius:3px;overflow:hidden;
   background:var(--dsw-alias-interactive-bg-hover)}
 .ccq-fill{display:block;height:100%;border-radius:3px;transition:width 240ms ease,background 240ms ease}
 .ccq-warn{display:flex;align-items:center;gap:6px;margin-top:10px;padding:6px 8px;border-radius:7px;
-  font-size:12px;line-height:17px;background:var(--dsw-alias-interactive-bg-hover-danger);
+  background:var(--dsw-alias-interactive-bg-hover-danger);
   color:var(--dsw-alias-state-error-primary)}
 .ccq-detail{margin-top:11px;padding-top:9px;border-top:1px solid var(--dsw-alias-border-l1)}
 .ccq-kv{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
-  font-size:12px;line-height:20px;color:var(--dsw-alias-label-secondary)}
+  color:var(--dsw-alias-label-secondary)}
 .ccq-kv-label{flex:none;white-space:nowrap}
 .ccq-kv-value{min-width:0;text-align:right;color:var(--dsw-alias-label-primary);
   font-variant-numeric:tabular-nums}
 .ccq-note{margin-top:6px;padding-top:6px;border-top:1px solid var(--dsw-alias-border-l1);
-  font-size:12px;line-height:18px;color:var(--dsw-alias-label-caption);
-  font-variant-numeric:tabular-nums}
+  color:var(--dsw-alias-label-caption);font-variant-numeric:tabular-nums}
 .ccq-note+.ccq-note{margin-top:1px;padding-top:0;border-top:none}
-.ccq-link{display:inline-block;margin-top:8px;font-size:12px;line-height:17px;
+.ccq-link{display:inline-block;margin-top:8px;
   color:var(--dsw-alias-link);text-decoration:none}
 .ccq-link:hover{text-decoration:underline}
-.ccq-error{font-size:12px;line-height:18px;color:var(--dsw-alias-state-error-primary)}
+.ccq-error{color:var(--dsw-alias-state-error-primary)}
 .ccq-rail{box-sizing:border-box;width:36px;height:36px;border-radius:50%;display:flex;
-  align-items:center;justify-content:center;font-size:12px;font-weight:600;
+  align-items:center;justify-content:center;font-size:13px;font-weight:600;
   font-variant-numeric:tabular-nums;border:none;background:transparent}
 `
 
@@ -698,7 +713,10 @@ window.__ModuleLoader__.load({
       const rows = report === undefined ? [] : windowsOf(report)
       // Two ways to be showing something other than a live reading: an answer
       // the host marked as its last snapshot, and a failed refresh after a good
-      // one. Both dim the numbers and say how old they are — never silently.
+      // one. Both dim the numbers. The age of the reading does not get a line of
+      // its own any more — see the card tooltip below — because a dimmed card
+      // already says "not live", and the sidebar has no height to spare for
+      // saying it twice.
       const stale = state.phase === 'error' ? report !== undefined : report?.stale === true
       const staleAt = report?.stale === true && typeof report.staleAgeMs === 'number'
         ? Date.now() - report.staleAgeMs
@@ -747,10 +765,14 @@ window.__ModuleLoader__.load({
 
       return h('div', {
         className: `ccq-card${stale ? ' ccq-stale' : ''}`,
-        title: [rows.length === 0 ? undefined : summaryTitle(rows, t)]
-          .concat(report?.failures?.length > 0 ? [`⚠ ${report.failures.join(' · ')}`] : [])
-          .filter((part) => part !== undefined)
-          .join('\n'),
+        // Everything the folded card does not have room to say lives here: each
+        // window's exact figures, why a window is missing, and — when the card is
+        // dimmed — how old the reading is.
+        title: [
+          rows.length === 0 ? undefined : summaryTitle(rows, t),
+          stale ? format(t('stale'), { age: ageOf(staleAt) ?? '—' }) : undefined,
+          report?.failures?.length > 0 ? `⚠ ${report.failures.join(' · ')}` : undefined,
+        ].filter((part) => part !== undefined).join('\n'),
         role: 'button',
         tabIndex: 0,
         'aria-expanded': report !== undefined && unfolded,
@@ -767,7 +789,6 @@ window.__ModuleLoader__.load({
           h('span', { className: `ccq-chevron${unfolded ? ' ccq-open' : ''}` }, '▾'),
         ),
         ...body,
-        stale ? h('div', { className: 'ccq-note' }, format(t('stale'), { age: ageOf(staleAt) ?? '—' })) : null,
         stage === STAGE_DETAIL && report !== undefined ? h('div', { className: 'ccq-detail' }, ...detailRows(report, rows, t)) : null,
       )
     }
@@ -779,8 +800,12 @@ window.__ModuleLoader__.load({
      */
     function apply(ctx) {
       ensureStyles()
+      // The dictionaries still register — they are this plugin's public copy, and
+      // the English table is what keeps this fork diffable against upstream — but
+      // the card itself no longer binds to the interface language: in this fork
+      // every surface the card draws is Chinese, whatever `dsh` is set to.
       ctx.effect(() => ctx.locale.register(NS, DICT), 'cc-quota: dictionaries')
-      const t = ctx.locale.bind(NS)
+      const t = (key) => DICT.zh[key] ?? key
       ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
         name: 'sidebar.footer.action',
         id: 'cc-quota',
