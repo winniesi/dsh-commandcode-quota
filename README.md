@@ -22,7 +22,7 @@ No browser tab, no login, no guessing how much of the plan is left.
 
 | | |
 |---|---|
-| **Three windows, one glance** | 5-hour, weekly and monthly, shortest first — so the tightest limit is where your eye lands |
+| **One row, then the rest** | Resting, the card is the monthly allowance alone — the number that decides whether the month still works; the first click unfolds the 5-hour and weekly windows (shortest first), the second the money and totals |
 | **Percentage first** | The headline rounds to a whole percent, exactly like the Command Code dashboard, so the card and the website never disagree |
 | **Money where it matters** | Used and remaining for the monthly allowance; exact figures for every row on hover |
 | **Instant, then live** | The card is on screen about 2 ms after a restart, and live about a second later |
@@ -47,7 +47,7 @@ dsh --version          # needs 0.1.5-rc.1 or newer
 npm i -g @deepseek-ai/dsh@latest
 ```
 
-Note that the plugin's 146 offline checks also **pass** on an older dsh — they never start dsh. So "the checks are green" does not mean it will work once installed.
+Note that the plugin's 154 offline checks also **pass** on an older dsh — they never start dsh. So "the checks are green" does not mean it will work once installed.
 
 ## Install
 
@@ -119,7 +119,9 @@ Two things make the difference:
 | **Weekly** | Rolling 7-day limit | `$35` |
 | **Monthly** | The billing period's credit allowance | `$70` |
 
-Each row shows the **used percentage** (green below 60 %, amber below 85 %, red above), a meter in the same colour, and a **reset countdown** (`59m`, `6d9h`, `8d1h`). Click the card for the monthly allowance in money, the remaining credit, the request count and the token totals. Collapse the sidebar and the card becomes a 36 px badge showing the **most constrained** window.
+Each row shows the **used percentage** (green below 60 %, amber below 85 %, red above), a meter in the same colour, and a **reset countdown** (`59m`, `6d9h`, `8d1h`).
+
+The card rests on one row — the monthly allowance — because that is the figure a budget holder actually checks. **Click it once** and the 5-hour and weekly windows unfold beside it; **click it again** for the monthly allowance in money, the remaining credit, the request count and the token totals; a third click folds it back. Every window's figures stay on the card's tooltip even while it is folded, so nothing needs a click to be readable. Collapse the sidebar and the card becomes a 36 px badge showing the **most constrained** window.
 
 ### Reading the numbers
 
@@ -131,6 +133,7 @@ Each row shows the **used percentage** (green below 60 %, amber below 85 %, red 
 
 The sidebar is about 200 px of content width, and a laptop screen makes small type smaller still. So the card answers one question well — *how deep am I?* — instead of laying out everything the API returns:
 
+- **Folded until asked.** The seat is permanent and shared with Settings, so the resting card spends its single row on the monthly allowance instead of three rows nobody asked for. The rolling windows, the money and the totals are each one click away, and warnings — a canceled subscription, a below-threshold balance — stay on screen at every stage rather than waiting behind one.
 - **Money only for the monthly allowance.** The 5-hour and weekly windows are pass/fail gates, not budgets; their dollar rows told a user nothing they could act on. Hover still shows exact figures.
 - **No pace verdict, no burn-rate forecast.** "Over pace" cannot be acted on by someone who has work to do, and a projected exhaustion date assumes a constant burn rate that credit usage never has. The host still exposes `projection` in its JSON for scripts.
 - **Nothing silent.** A row that disappears because its endpoint failed says so; a failure with nothing to fall back on says what went wrong in one readable line, with the full diagnostic text on hover.
@@ -299,7 +302,7 @@ The CLI's human-readable output is Chinese; `--json` is language-neutral and is 
 # 1. React is needed only by the component test and the preview page
 mkdir .devdeps && cd .devdeps && npm init -y && npm install react@18 react-dom@18 && cd ..
 
-# 2. Everything at once — 146 checks, one verdict, no network, no real credentials
+# 2. Everything at once — 154 checks, one verdict, no network, no real credentials
 node scripts/check.mjs            # release check: static + secret scan + every suite below
 node scripts/verify.mjs           # add --live to also hit a real account
 node scripts/verify.mjs --quiet   # one summary line per suite

@@ -223,11 +223,18 @@ const html = `<!doctype html>
     )
   }
 
-  // Effects settle asynchronously; the expanded column is clicked afterwards so
-  // the screenshot shows both the resting and the opened card.
+  // Effects settle asynchronously; the cards are clicked afterwards so the
+  // screenshot shows both the resting and the unfolded card. One click on the
+  // dark card stops at the middle stage, two on the light one go all the way —
+  // so the three columns document all three steps, next to the rail badge.
   setTimeout(() => {
-    const card = document.querySelector('[data-mount="lightopen"] .ccq-card')
-    if (card) card.click()
+    const unfold = (mount, clicks) => {
+      const card = document.querySelector('[data-mount="' + mount + '"] .ccq-card')
+      if (!card) return
+      for (let i = 0; i < clicks; i += 1) card.click()
+    }
+    unfold('dark', 1)
+    unfold('lightopen', 2)
   }, 400)
 </script>
 </body></html>

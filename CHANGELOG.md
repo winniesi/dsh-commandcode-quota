@@ -39,7 +39,7 @@ and the cordis loader id, not a document version, so it does not move.
   file parses, every `.js`/`.mjs` passes `node --check`, no credential or
   machine-specific path is committed, the package identity is consistent across
   `package.json`, `package-lock.json`, `cordis.patch.yml` and `screenshots.json`,
-  and then the 146 offline checks in `scripts/verify.mjs`.
+  and then the 154 offline checks in `scripts/verify.mjs`.
 - **`SECURITY.md`** — supported versions, private reporting, the exact list of what
   the plugin reads, writes and sends, and the credential-resolution order.
 - **`package-lock.json`** — the React dependency tree, so CI installs what the
@@ -47,6 +47,20 @@ and the cordis loader id, not a document version, so it does not move.
 
 ### Changed
 
+- **The card unfolds in three steps instead of two.** It used to render all three
+  credit windows the moment it appeared, with the money and totals one click
+  behind them. It now rests on a single row — the monthly allowance, the figure a
+  budget holder actually checks — and the first click adds the 5-hour and weekly
+  windows, the second the money-and-totals panel, the third folding it back. The
+  sidebar seat is permanent and shared with Settings, so the resting card answers
+  one question instead of three; nothing became unreachable, because the card's
+  own tooltip still names every window with its percentage and remaining credit
+  while folded, and account-level warnings (a canceled subscription, a
+  below-threshold balance) stay on screen at every stage. A plan that reports no
+  monthly window — or whose monthly percentage the host withheld because the read
+  straddled a billing boundary — rests on the tightest trustworthy row instead of
+  a bare dash, matching what the collapsed rail badge already does. The behavior is covered by eight new checks in the
+  client suite, which now drives the card through stages 0, 1 and 2.
 - **Merged everything the shared repository changed after the move.** The data
   layer grew 706 → 711 lines, the dynamic and client suites were extended, both
   READMEs were rewritten and expanded, and `package.json` gained `homepage`,

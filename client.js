@@ -9,6 +9,12 @@
  *
  * Presentation rules:
  *
+ * - The card reveals itself in three steps, because the seat it holds is shared
+ *   with Settings and is on screen on every page. Resting, it answers the one
+ *   question a budget holder asks — how much of the monthly allowance is left —
+ *   with a single row. The first click adds the rolling windows, the second adds
+ *   the money-and-totals panel, and the third folds it all away again. Nothing
+ *   is hidden while collapsed: the card's own tooltip still names every window.
  * - Windows run shortest first (5 hours, weekly, monthly), so the tightest
  *   constraint sits where your eye lands first.
  * - The used *percentage* is the row's value and the bar repeats it graphically,
@@ -88,6 +94,19 @@ window.__ModuleLoader__.load({
     const SPENT_PERCENT = 99.5
     /** Where to send someone who needs more credit. */
     const BILLING_URL = 'https://commandcode.ai/pricing'
+
+    /**
+     * The card's disclosure steps, in click order: one monthly row, then every
+     * window, then the money-and-totals panel.
+     *
+     * A number rather than a boolean because there is a middle state now: the
+     * sidebar seat is permanent, and "one row, all windows, all figures" is a
+     * better use of it than "everything or nothing".
+     */
+    const STAGE_SUMMARY = 0
+    const STAGE_DETAIL = 2
+    /** One more than the last stage: the toggle cycles through every step. */
+    const STAGE_COUNT = STAGE_DETAIL + 1
 
     const LEVELS = [
       { below: 60, color: 'var(--dsw-alias-state-success-primary)' },
@@ -348,6 +367,30 @@ window.__ModuleLoader__.load({
         })
       }
       return rows
+    }
+
+    /**
+     * The one window the resting card shows.
+     *
+     * The monthly allowance is what a user budgets against, so it is the row the
+     * card spends its default space on — but only while its percentage is real.
+     * A plan that reports no monthly window (a pay-as-you-go Provider, say), or
+     * one whose monthly read straddled a billing boundary and was withheld,
+     * falls back to the tightest trustworthy row rather than resting on a bare
+     * dash. That is the rule the collapsed rail badge already applies, so the one
+     * number on screen means the same thing in both sidebar widths. Rounded
+     * before comparing, so two rows that both read `60%` cannot make the choice
+     * flip between refreshes.
+     */
+    function headlineRow(rows) {
+      const monthly = rows.find(
+        (row) => row.key === 'monthly' && row.percent !== undefined && row.capSuspect !== true,
+      )
+      if (monthly !== undefined) return monthly
+      return rows.reduce(
+        (worst, row) => (worst === undefined || Math.round(row.percent ?? 0) > Math.round(worst.percent ?? 0) ? row : worst),
+        undefined,
+      )
     }
 
     /**
@@ -640,7 +683,8 @@ window.__ModuleLoader__.load({
 
     /** The sidebar-foot card. */
     function QuotaCard(props) {
-      const [open, setOpen] = React.useState(false)
+      // How much of the card is unfolded — see STAGE_SUMMARY and friends.
+      const [stage, setStage] = React.useState(STAGE_SUMMARY)
       const { state, refresh } = useQuota(props.fetchQuota)
       const t = props.t
 
@@ -673,8 +717,16 @@ window.__ModuleLoader__.load({
         body = [h('div', { key: 'none', className: 'ccq-note' }, t('none'))]
       } else {
         const degraded = Array.isArray(report.failures) ? report.failures.length : 0
+        // Resting, the card spends its one row on the monthly allowance. The
+        // rolling windows join it on the first click — and the account-level
+        // warnings below stay on screen at every stage: hiding "subscription
+        // canceled" behind two clicks would be a disservice, and a healthy
+        // account has none to show.
+        const shown = stage === STAGE_SUMMARY
+          ? [headlineRow(rows)].filter((row) => row !== undefined)
+          : rows
         body = [
-          ...rows.map((row) => h(WindowRow, { key: row.key, row, t })),
+          ...shown.map((row) => h(WindowRow, { key: row.key, row, t })),
           ...warningsOf(report, t).map((warning, index) => h('div', {
             key: `warn-${String(index)}`,
             className: 'ccq-warn',
@@ -685,10 +737,13 @@ window.__ModuleLoader__.load({
         ].filter((part) => part !== null)
       }
 
+      // A failed read keeps the old retry behaviour: the click that would unfold
+      // the card re-asks instead, which is the only thing it can usefully do.
       const toggle = () => {
         if (report === undefined) { refresh(); return }
-        setOpen((value) => !value)
+        setStage((value) => (value + 1) % STAGE_COUNT)
       }
+      const unfolded = stage > STAGE_SUMMARY
 
       return h('div', {
         className: `ccq-card${stale ? ' ccq-stale' : ''}`,
@@ -698,7 +753,7 @@ window.__ModuleLoader__.load({
           .join('\n'),
         role: 'button',
         tabIndex: 0,
-        'aria-expanded': report !== undefined && open,
+        'aria-expanded': report !== undefined && unfolded,
         onClick: toggle,
         onKeyDown: (event) => {
           if (event.key !== 'Enter' && event.key !== ' ') return
@@ -709,11 +764,11 @@ window.__ModuleLoader__.load({
         h('div', { className: 'ccq-head' },
           h('span', { className: 'ccq-title' }, 'Command Code'),
           h('span', { className: 'ccq-plan', title: planName }, planName),
-          h('span', { className: `ccq-chevron${open ? ' ccq-open' : ''}` }, '▾'),
+          h('span', { className: `ccq-chevron${unfolded ? ' ccq-open' : ''}` }, '▾'),
         ),
         ...body,
         stale ? h('div', { className: 'ccq-note' }, format(t('stale'), { age: ageOf(staleAt) ?? '—' })) : null,
-        open && report !== undefined ? h('div', { className: 'ccq-detail' }, ...detailRows(report, rows, t)) : null,
+        stage === STAGE_DETAIL && report !== undefined ? h('div', { className: 'ccq-detail' }, ...detailRows(report, rows, t)) : null,
       )
     }
 
