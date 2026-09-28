@@ -6,7 +6,7 @@
 
 No browser tab, no login, no guessing how much of the plan is left.
 
-[![Check](https://github.com/Jovan1666/dsh-commandcode-quota/actions/workflows/check.yml/badge.svg)](https://github.com/Jovan1666/dsh-commandcode-quota/actions/workflows/check.yml)
+[![Check](https://github.com/winniesi/dsh-commandcode-quota/actions/workflows/check.yml/badge.svg)](https://github.com/winniesi/dsh-commandcode-quota/actions/workflows/check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DeepSeek Harness](https://img.shields.io/badge/DeepSeek%20Harness-plugin-4D6BFE)](https://github.com/deepseek-ai/deepseek-harness)
 [![dsh](https://img.shields.io/badge/dsh-%5E0.1.5--rc.1-blue)](#requirements)
@@ -15,6 +15,8 @@ No browser tab, no login, no guessing how much of the plan is left.
 <img src="assets/screenshot.png" alt="The quota card in the sidebar: light rail, light expanded, dark expanded" width="820">
 
 </div>
+
+> **This is a fork of [Jovan1666/dsh-commandcode-quota](https://github.com/Jovan1666/dsh-commandcode-quota).** It keeps the same package name — `dsh-commandcode-quota` is both the install spec and the cordis loader id — and adds local changes to the card: three-step disclosure, a single type size, no stale-age line, and English-only copy across the card, the CLI and the host messages.
 
 ---
 
@@ -52,10 +54,14 @@ Note that the plugin's 156 offline checks also **pass** on an older dsh — they
 ## Install
 
 ```sh
-dsh plugin --profile web add github:Jovan1666/dsh-commandcode-quota
+dsh plugin --profile web add github:winniesi/dsh-commandcode-quota
 ```
 
 Then restart `dsh web` and reload the browser page. That is the whole setup — no configuration file, no API key to paste: if Command Code is already a provider in your DSH settings, the plugin finds it.
+
+**On the desktop app** the CLI is not the way in: dsh refuses `--profile desktop` (`profile "desktop" is managed exclusively by the Electron application`). Add the plugin from the app's plugin manager instead, with the same `github:winniesi/dsh-commandcode-quota` spec. That dialog also takes a local absolute path, which is the better choice while you are working on the plugin: a linked checkout picks up client-side changes on a page reload, where a GitHub install has to be reinstalled.
+
+A plugin installed from GitHub is pinned to the commit that was `main` when the install ran — pnpm records it in the profile's `pnpm-lock.yaml`, and nothing polls upstream for you. Move it with `dsh plugin --profile web update dsh-commandcode-quota`, or by removing and re-adding it in the desktop app's plugin manager.
 
 The package declares a bundle patch (`dsh.bundle.patch` → its `cordis.patch.yml`), so `dsh plugin add` registers the plugin row for you. **Do not also append that row to your profile's `cordis.patch.yml`.** Two layers inserting the same loader id make dsh refuse to start: `duplicate loader entry id: commandcode-quota`. The row belongs to the manual install below, where no bundle layer exists.
 
@@ -65,7 +71,7 @@ The package declares a bundle patch (`dsh.bundle.patch` → its `cordis.patch.ym
 **From a local clone**
 
 ```sh
-git clone https://github.com/Jovan1666/dsh-commandcode-quota
+git clone https://github.com/winniesi/dsh-commandcode-quota
 dsh plugin --profile web add ./dsh-commandcode-quota
 ```
 
@@ -258,7 +264,7 @@ node cli/cli.mjs --help
 ```
 
 ```text
-Command Code · GOAT (individual-goat) · Jovan1666
+Command Code · GOAT (individual-goat) · winniesi
 key: $DSH_HOME/.credentials.yaml → refs.COMMAND_CODE_GOAT_API_KEY
 
 5-hour     ---------------------------- 1.4%

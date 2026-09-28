@@ -9,7 +9,7 @@
     "cli/cli.mjs": "596ae67838efb493488880439e5486abb2b481fb987ed16e977b51982525fab7",
     "client.js": "232f0951bf8bc082a7a98f56ef20c8684dcb8af45438b34bdc88d3f2769cd6ce",
     "index.js": "fdb3d94fe9e50410a21dac904f7b4576df42344828ad201a1495c35681fa478c",
-    "package.json": "cbe08f56fa07c15fed82ba575f68841e491c561882875e433eabe709a0fa6c0f",
+    "package.json": "7b0c130e56e17891640020583518b01b48a47a6d9065995dd54b6f2b3eb4a16b",
     "preview/build.mjs": "c4475a4549a40993a17d33b28eed24e8dad487795680e3fb7c75822331bdc4a3",
     "preview/check-blocks.mjs": "b166a1208993c2ce578afaf84b3f8796e6f6c82227f72cf59472abdabb4dd76f",
     "preview/e2e-live.mjs": "1df095b7755e6a9ba82c99c8a9f4b2d418018afdc11da16cf7b35c153549ec68",

@@ -8,7 +8,7 @@ branches and no maintained older releases.
 ## Reporting a vulnerability
 
 Report privately through GitHub: open the **Security** tab of
-<https://github.com/Jovan1666/dsh-commandcode-quota> and choose **Report a
+<https://github.com/winniesi/dsh-commandcode-quota> and choose **Report a
 vulnerability**. If that channel is not available to you, open a normal issue that
 says only that you have a security report and how to reach you — put no details in
 the issue itself.

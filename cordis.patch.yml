@@ -1,6 +1,6 @@
 # dsh-commandcode-quota bundle patch.
 #
-# 本插件就在本仓库根目录（Jovan1666/dsh-commandcode-quota），仓库根平铺。
+# 本插件就在本仓库根目录（winniesi/dsh-commandcode-quota），仓库根平铺。
 # 包名 dsh-commandcode-quota 同时是安装命令和 cordis 的 loader id，不要改。
 #
 # Two ways to compose this plugin into a profile:

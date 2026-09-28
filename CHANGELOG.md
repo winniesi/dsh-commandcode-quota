@@ -47,6 +47,24 @@ and the cordis loader id, not a document version, so it does not move.
 
 ### Changed
 
+- **The repository describes this fork, not upstream.** Every install command,
+  CI badge, clone URL, security-reporting link, `homepage`/`repository` field and
+  the bundle patch's comment point at
+  `https://github.com/winniesi/dsh-commandcode-quota`, and the CLI sample in both
+  READMEs no longer prints upstream's account name. The package name is unchanged
+  — `dsh-commandcode-quota` is both the install spec and the cordis loader id —
+  so this installs *as* the plugin rather than beside it. `LICENSE` keeps
+  upstream's copyright line and adds one for this fork's changes; the historical
+  CHANGELOG entries and `.sync-source.json` still name the upstream repositories,
+  because that is what they are records of.
+- **The install section covers the desktop app and the update story.** The CLI
+  refuses `--profile desktop` (`managed exclusively by the Electron
+  application`), so the plugin manager is the way in there — and its dialog also
+  accepts a local absolute path, which beats a GitHub install while the plugin is
+  being worked on. A GitHub install is pinned to the commit that was `main` at
+  install time, and nothing polls upstream: moving it takes
+  `dsh plugin --profile web update dsh-commandcode-quota`, or a remove-and-re-add
+  in the desktop app.
 - **Every surface the plugin prints is English.** Three surfaces used to run on
   two rules: the card followed the interface language, the `ccq` CLI printed
   Chinese, and `/quota` printed English — so the same account read differently

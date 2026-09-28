@@ -6,7 +6,7 @@
 
 不用开浏览器、不用登录、不用猜这个月还剩多少。
 
-[![Check](https://github.com/Jovan1666/dsh-commandcode-quota/actions/workflows/check.yml/badge.svg)](https://github.com/Jovan1666/dsh-commandcode-quota/actions/workflows/check.yml)
+[![Check](https://github.com/winniesi/dsh-commandcode-quota/actions/workflows/check.yml/badge.svg)](https://github.com/winniesi/dsh-commandcode-quota/actions/workflows/check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DeepSeek Harness](https://img.shields.io/badge/DeepSeek%20Harness-plugin-4D6BFE)](https://github.com/deepseek-ai/deepseek-harness)
 [![dsh](https://img.shields.io/badge/dsh-%5E0.1.5--rc.1-blue)](#环境要求)
@@ -15,6 +15,8 @@
 <img src="assets/screenshot.png" alt="侧边栏里的额度卡片：浅色导轨、浅色展开、深色展开" width="820">
 
 </div>
+
+> **这是 [Jovan1666/dsh-commandcode-quota](https://github.com/Jovan1666/dsh-commandcode-quota) 的 fork。** 包名保持不变——`dsh-commandcode-quota` 既是安装 spec，也是 cordis 的 loader id——本地改动集中在卡片上：三段展开、单一字号、去掉「上次成功」那一行，以及卡片 / CLI / 宿主文案全部英文。
 
 ---
 
@@ -53,10 +55,14 @@ npm i -g @deepseek-ai/dsh@latest
 ## 安装
 
 ```sh
-dsh plugin --profile web add github:Jovan1666/dsh-commandcode-quota
+dsh plugin --profile web add github:winniesi/dsh-commandcode-quota
 ```
 
 然后重启 `dsh web`、刷新浏览器页面。设置就这么多——没有配置文件、不用填 API key：只要 Command Code 已经是你 DSH 设置里的一个 provider，插件自己会找到它。
+
+**桌面应用** 里 CLI 不是入口：dsh 会直接拒绝 `--profile desktop`（`profile "desktop" is managed exclusively by the Electron application`）。请改在应用的插件界面里添加，spec 一样是 `github:winniesi/dsh-commandcode-quota`。那个对话框也接受本地绝对路径——你还在改这个插件时，本地路径是更好的选择：链接进来的工作树，客户端改动刷新页面就生效，而从 GitHub 安装则要重装一次。
+
+从 GitHub 安装的插件会被钉在**安装那一刻 `main` 所在的 commit**——pnpm 把它记在 profile 的 `pnpm-lock.yaml` 里，没有任何东西会替你问上游有没有新提交。要更新：`dsh plugin --profile web update dsh-commandcode-quota`；桌面应用则在插件界面里卸载再装一次。
 
 包里声明了 bundle patch（`dsh.bundle.patch` → 仓库根的 `cordis.patch.yml`），所以 `dsh plugin add` 已经替你注册了插件行。**不要再把那行追加到 profile 自己的 `cordis.patch.yml` 里**：两层插入同一个 loader id，dsh 会直接拒绝启动，报 `duplicate loader entry id: commandcode-quota`。那一行属于下面的手动安装方式——那种装法没有 bundle 层。
 
@@ -66,7 +72,7 @@ dsh plugin --profile web add github:Jovan1666/dsh-commandcode-quota
 **本地克隆安装**
 
 ```sh
-git clone https://github.com/Jovan1666/dsh-commandcode-quota
+git clone https://github.com/winniesi/dsh-commandcode-quota
 dsh plugin --profile web add ./dsh-commandcode-quota
 ```
 
@@ -259,7 +265,7 @@ node cli/cli.mjs --help
 ```
 
 ```text
-Command Code · GOAT (individual-goat) · Jovan1666
+Command Code · GOAT (individual-goat) · winniesi
 key: $DSH_HOME/.credentials.yaml → refs.COMMAND_CODE_GOAT_API_KEY
 
 5-hour     ---------------------------- 1.4%
